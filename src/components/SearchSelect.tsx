@@ -3,7 +3,8 @@ import { ChevronIcon, CloseIcon } from './Icons'
 
 export type Option = { id: string; label: string; color?: string; sub?: string }
 
-// A dropdown that opens inline with a search box. The optional last option adds a new item
+// A dropdown that opens inline with a search box. The search box is not focused on open, so
+// the phone keyboard only appears when you tap it; most picks are a scroll and a tap. The optional last option adds a new item
 // (it receives what was typed).
 export function SearchSelect({
   options,
@@ -54,7 +55,7 @@ export function SearchSelect({
       <div className="inline">
         <input
           className="input grow"
-          autoFocus
+          type="search"
           placeholder="Search…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
