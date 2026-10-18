@@ -3,19 +3,17 @@ import { addDays, parseDate, shortDate, today, weekStart } from '../lib/dates'
 const DAY_LABELS = ['Mon', '', 'Wed', '', 'Fri', '', '']
 
 // GitHub-style contribution calendar: one column per week (Mon at the top), one square per
-// day, greener = more sets. No numbers, just the squares.
+// day, greener = more sets. No numbers, just the squares, stretched to the full width.
 export function Heatmap({
   days,
   values,
   onTap,
   unit = 'set',
-  size = 'md',
 }: {
   days: number
   values: Map<string, number>
   onTap?: (date: string) => void
   unit?: string
-  size?: 'md' | 'lg'
 }) {
   const end = today()
   const start = addDays(end, -(days - 1))
@@ -37,18 +35,19 @@ export function Heatmap({
     return !prevDay || parseDate(prevDay).getMonth() !== m ? parseDate(day).toLocaleDateString(undefined, { month: 'short' }) : ''
   })
 
-  const cols = { gridTemplateColumns: `var(--heat-label) repeat(${weeks}, var(--heat-cell))` }
+  // weeks share the full width; squares stay square via aspect-ratio
+  const cols = { gridTemplateColumns: `var(--heat-label) repeat(${weeks}, minmax(0, 1fr))` }
   const label = (d: string) => `${shortDate(d)}: ${values.get(d) ?? 0} ${unit}${values.get(d) === 1 ? '' : 's'}`
 
   return (
-    <div className={`heatmap-wrap heat-${size}`}>
+    <div className="heatmap-wrap">
       <div className="heatmap heatmap-months" style={cols} aria-hidden>
         <span />
         {months.map((m, i) => (
           <span key={i}>{m}</span>
         ))}
       </div>
-      <div className="heatmap" style={{ ...cols, gridTemplateRows: 'repeat(7, var(--heat-cell))' }}>
+      <div className="heatmap" style={cols}>
         {DAY_LABELS.map((l, i) => (
           <span key={`l${i}`} className="heatmap-day" style={{ gridColumn: 1, gridRow: i + 1 }} aria-hidden>
             {l}

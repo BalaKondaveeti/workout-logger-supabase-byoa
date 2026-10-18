@@ -44,8 +44,6 @@
   --heat-4: #216e39;
   --heat-outline: rgb(27 31 35 / 0.06);
   --heat-today: #111111;
-  --heat-cell-md: 19px; /* 90-day calendars */
-  --heat-cell-lg: 34px; /* Home, 30 days: big enough to tap */
   --heat-gap: 3px;
   --heat-radius: 3px;
   --heat-label: 28px; /* Mon / Wed / Fri column */

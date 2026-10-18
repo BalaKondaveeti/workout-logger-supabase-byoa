@@ -291,14 +291,6 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
           <input type="checkbox" checked={!!day?.pre_workout} onChange={(e) => updateDay(date, { pre_workout: e.target.checked })} />
           Pre-workout ⚡
         </label>
-        {day?.pre_workout && (
-          <input
-            className="input"
-            placeholder="What, how much, when"
-            value={day.pre_workout_note ?? ''}
-            onChange={(e) => updateDay(date, { pre_workout_note: e.target.value || null })}
-          />
-        )}
         <div className="field">
           <span>Day rating</span>
           <Stars value={day?.rating ?? null} onChange={(rating) => updateDay(date, { rating })} />

@@ -4,7 +4,7 @@ import { Heatmap } from '../components/Heatmap'
 import { Freshness } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
 import { byName, useIndex } from '../lib/derive'
-import { addDays, daysBetween, shortDate, today, weekStart } from '../lib/dates'
+import { addDays, daysBetween, shortDate, today } from '../lib/dates'
 
 export function Home() {
   const ix = useIndex()
@@ -24,34 +24,28 @@ export function Home() {
   const visits = ix.dates.filter((d) => d <= now)
   const last = visits[0]
   const since = last ? daysBetween(last, now) : null
-  const monthAgo = addDays(now, -29)
-  const visits30 = visits.filter((d) => d >= monthAgo)
-  const sets30 = visits30.reduce((sum, d) => sum + (ix.setsPerDate.get(d) ?? 0), 0)
-  const thisWeek = visits.filter((d) => d >= weekStart(now)).length
+  const visits7 = visits.filter((d) => d >= addDays(now, -6)).length
+  const visits30 = visits.filter((d) => d >= addDays(now, -29)).length
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
   return (
     <div className="page">
       <PageHeader title={<h1>Gym</h1>} right={<Freshness />} />
-      <section className="section">
-        <h2>Last 30 days</h2>
-        <Heatmap days={30} size="lg" values={ix.setsPerDate} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
-      </section>
-      <section className="stats">
-        <Stat
-          label="Since last visit"
-          value={since === null ? '—' : since === 0 ? 'Today' : `${since} day${since === 1 ? '' : 's'}`}
-          sub={last && since ? shortDate(last) : undefined}
-        />
-        <Stat label="This week" value={`${thisWeek} visit${thisWeek === 1 ? '' : 's'}`} />
-        <Stat label="Last 30 days" value={`${visits30.length} visit${visits30.length === 1 ? '' : 's'}`} />
-        <Stat label="Sets, 30 days" value={sets30} />
-      </section>
       <div className="grid-2">
-        <SearchSelect options={exercises} placeholder="Exercise" onPick={(id) => (window.location.hash = `#/exercise/${id}`)} />
+        <SearchSelect options={exercises} placeholder="Workout" onPick={(id) => (window.location.hash = `#/exercise/${id}`)} />
         <SearchSelect options={muscles} placeholder="Muscle" onPick={(id) => (window.location.hash = `#/muscle/${id}`)} />
       </div>
       <section className="section">
-        <h2>History</h2>
+        <h2>Last 50 days</h2>
+        <Heatmap days={50} values={ix.setsPerDate} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
+      </section>
+      <section className="stats stats-3">
+        <Stat label="Since last visit" value={since === null ? '—' : plural(since, 'day')} sub={last ? shortDate(last) : undefined} />
+        <Stat label="Last 7 days" value={plural(visits7, 'visit')} />
+        <Stat label="Last 30 days" value={plural(visits30, 'visit')} />
+      </section>
+      <section className="section">
+        <h2>Gym sessions</h2>
         <Feed />
       </section>
     </div>

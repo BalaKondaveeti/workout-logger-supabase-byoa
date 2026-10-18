@@ -713,22 +713,15 @@ input[type='time'].input {
 /* ---------- Heatmap (GitHub-style) ---------- */
 
 .heatmap-wrap {
-  --heat-cell: var(--heat-cell-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-.heatmap-wrap.heat-lg {
-  --heat-cell: var(--heat-cell-lg);
 }
 
 .heatmap {
   display: grid;
   gap: var(--heat-gap);
-  width: max-content;
+  width: 100%;
 }
 
 .heatmap-months span,
@@ -746,8 +739,8 @@ input[type='time'].input {
 
 .cell {
   display: block;
-  width: var(--heat-cell);
-  height: var(--heat-cell);
+  width: 100%;
+  aspect-ratio: 1;
   padding: 0;
   border: 0;
   border-radius: var(--heat-radius);
@@ -796,6 +789,7 @@ input[type='time'].input {
 .heatmap-legend .cell {
   width: 10px;
   height: 10px;
+  aspect-ratio: auto;
   border-radius: 2px;
 }
 
@@ -815,6 +809,19 @@ input[type='time'].input {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+}
+
+.day-time {
+  margin-left: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight);
+  color: var(--muted);
+}
+
+.day-hours {
+  flex: none;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
 }
 
 .day-head {
@@ -1170,6 +1177,10 @@ input[type='time'].input {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
+}
+
+.stats.stats-3 {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .stat {

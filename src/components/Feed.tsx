@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { deleteLog } from '../lib/actions'
 import { useIndex } from '../lib/derive'
-import { longDate, prettyDuration, durationMinutes, prettyTime } from '../lib/dates'
+import { durationMinutes, longDate, prettyTime } from '../lib/dates'
 import { usePrefs } from '../lib/prefs'
 import type { Day, Log } from '../lib/types'
 import { fmtSet, fmtSets } from '../lib/units'
@@ -11,18 +11,28 @@ import { SwipeRow } from './SwipeRow'
 
 const PAGE_DAYS = 10
 
+// "1:30 PM–3:00 PM", or just the check-in / check-out time when only one is set
+export function dayTimes(day: Day) {
+  if (day.check_in && day.check_out) return `${prettyTime(day.check_in)}–${prettyTime(day.check_out)}`
+  if (day.check_in) return prettyTime(day.check_in)
+  if (day.check_out) return `out ${prettyTime(day.check_out)}`
+  return ''
+}
+
+// "1.5 hrs" when both times are set
+export function dayHours(day: Day) {
+  const min = durationMinutes(day.check_in, day.check_out)
+  if (min === null) return ''
+  const h = Math.round((min / 60) * 10) / 10
+  return `${h} hr${h === 1 ? '' : 's'}`
+}
+
 export function DayMeta({ day }: { day: Day }) {
-  const dur = durationMinutes(day.check_in, day.check_out)
-  const parts: string[] = []
-  if (day.check_in || day.check_out) {
-    parts.push(`${prettyTime(day.check_in) || '…'}–${prettyTime(day.check_out) || '…'}${dur !== null ? ` (${prettyDuration(dur)})` : ''}`)
-  }
-  if (day.pre_workout) parts.push('Pre-workout ⚡')
   return (
     <>
-      {(parts.length > 0 || day.rating) && (
+      {(day.pre_workout || day.rating) && (
         <div className="day-meta">
-          {parts.join(' · ')}
+          {day.pre_workout && <span>Pre-workout ⚡</span>}
           {day.rating ? <Stars value={day.rating} /> : null}
         </div>
       )}
@@ -105,8 +115,11 @@ export function Feed({ filter }: { filter?: (log: Log) => boolean }) {
       {days.slice(0, limit).map(({ day, logs }) => (
         <section key={day.id} className="feed-day">
           <a className="day-head" href={`#/log/${day.date}`}>
-            <span className="day-date">{longDate(day.date)}</span>
-            <span className="muted small">{logs.length ? `${logs.length} exercise${logs.length > 1 ? 's' : ''}` : ''}</span>
+            <span className="grow">
+              <span className="day-date">{longDate(day.date)}</span>
+              {dayTimes(day) && <span className="day-time">{dayTimes(day)}</span>}
+            </span>
+            {dayHours(day) && <span className="day-hours">{dayHours(day)}</span>}
           </a>
           {!filter && <DayMeta day={day} />}
           <div className="list">
