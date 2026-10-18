@@ -46,5 +46,5 @@ after about a week idle), a notice links to the dashboard to restore it, with a 
 
 ## Restyling
 
-Every color, font, size, spacing and radius is a CSS variable in `src/theme.css`
+Every color, font, size, spacing and radius is a CSS variable in `src/theme.css` (iOS-style grouped cards with a green accent).
 (light + dark via `prefers-color-scheme`).

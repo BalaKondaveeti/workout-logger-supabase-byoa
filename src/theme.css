@@ -1,40 +1,56 @@
 /*
  * Design tokens. Restyle the whole app by editing this file only.
  * Every color, font, size, radius and spacing value in styles.css comes from here.
- * Monochrome on purpose: the only colors are muscle tags and the green activity calendar.
+ * Style: iOS / Apple Fitness "grouped cards": gray page, white rounded cards, one energetic
+ * green accent (matching the activity calendar), amber stars, muscle colors on tags and rows.
  */
 :root {
-  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-size: 16px;
   --font-size-input: 16px; /* never below 16px: iOS zooms into smaller inputs */
   --font-size-sm: 13px;
   --font-size-xs: 11px;
-  --font-size-lg: 22px;
+  --font-size-md: 17px; /* exercise card titles */
+  --font-size-lg: 20px;
   --font-size-xl: 28px;
-  --font-size-num: 20px; /* set inputs, stat values */
+  --font-size-title: 32px; /* large page titles */
+  --font-size-num: 20px; /* set inputs */
+  --font-size-stat: 30px;
   --font-size-star: 28px;
   --font-size-axis: 10px; /* chart axis labels (SVG units) */
   --font-weight: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 600;
+  --font-weight-heavy: 700;
 
-  --bg: #ffffff;
-  --surface: #f5f5f5;
-  --surface-2: #ebebeb;
-  --text: #111111;
-  --muted: #8a8a8a;
-  --border: #ebebeb;
-  --accent: #111111; /* primary buttons, selected states, chart lines */
+  --bg: #f2f2f7; /* page */
+  --card: #ffffff;
+  --input: #f2f2f7; /* fields sitting on cards */
+  --input-on-bg: #ffffff; /* fields sitting on the page */
+  --surface: #f2f2f7; /* quiet buttons, chips */
+  --surface-2: #e5e5ea;
+  --text: #0b0b0c;
+  --muted: #6e6e73;
+  --border: #e5e5ea;
+  --accent: #15803d; /* buttons, links, selected states, chart line */
   --accent-text: #ffffff;
-  --danger: #c0392b;
+  --accent-soft: #dcfce7; /* tinted backgrounds */
+  --accent-ink: #166534; /* text on tinted backgrounds, highlight numbers */
+  --energy: #f59e0b; /* pre-workout ⚡ */
+  --energy-soft: #fef3c7;
+  --energy-ink: #92400e;
+  --danger: #dc2626;
   --danger-text: #ffffff;
-  --star: #111111;
-  --star-off: #d4d4d4;
-  --shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  --star: #f59e0b;
+  --star-off: #d1d1d6;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.15);
-
-  --chart-bar: #cfcfcf;
+  --nav-bg: rgb(255 255 255 / 0.85);
+  --head-bg: rgb(242 242 247 / 0.88);
+  --chart-bar: #86efac;
+  --knob: #ffffff; /* switch thumb */
 
   /* activity calendar (GitHub greens): none -> most */
   --heat-0: #ebedf0;
@@ -43,15 +59,15 @@
   --heat-3: #30a14e;
   --heat-4: #216e39;
   --heat-outline: rgb(27 31 35 / 0.06);
-  --heat-today: #111111;
+  --heat-today: #0b0b0c;
   --heat-cell-target: 16px; /* calendars fit as many weeks of ~16px squares as the width allows */
   --heat-gap: 3px;
   --heat-radius: 3px;
   --heat-label: 28px; /* Mon / Wed / Fri column */
 
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-xs: 4px;
+  --radius: 16px; /* cards */
+  --radius-sm: 10px; /* fields, buttons */
+  --radius-xs: 6px;
   --radius-pill: 999px;
   --space-1: 4px;
   --space-2: 8px;
@@ -60,32 +76,41 @@
   --space-5: 24px;
   --space-6: 32px;
   --tap: 44px; /* minimum tap target */
-  --tap-lg: 56px;
+  --tap-lg: 54px;
   --content-width: 640px;
   --nav-height: 60px;
-  --cell-max: 44px; /* calendar square max size */
+  --badge-size: 46px; /* date badge on session cards */
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #111111;
-    --surface: #1c1c1c;
-    --surface-2: #262626;
-    --text: #f2f2f2;
-    --muted: #8a8a8a;
-    --border: #262626;
-    --accent: #f2f2f2;
-    --accent-text: #111111;
-    --danger: #e57373;
-    --danger-text: #111111;
-    --star: #f2f2f2;
-    --star-off: #3a3a3a;
-    --shadow: 0 4px 16px rgb(0 0 0 / 0.5);
+    --bg: #000000;
+    --card: #1c1c1e;
+    --input: #2c2c2e;
+    --input-on-bg: #1c1c1e;
+    --surface: #2c2c2e;
+    --surface-2: #3a3a3c;
+    --text: #f5f5f7;
+    --muted: #98989f;
+    --border: #38383a;
+    --accent: #30d158;
+    --accent-text: #00210b;
+    --accent-soft: rgb(48 209 88 / 0.16);
+    --accent-ink: #4ade80;
+    --energy: #ffd60a;
+    --energy-soft: rgb(255 214 10 / 0.16);
+    --energy-ink: #ffd60a;
+    --danger: #ff453a;
+    --danger-text: #ffffff;
+    --star: #ffd60a;
+    --star-off: #48484a;
+    --shadow: none;
     --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.5);
-
-    --chart-bar: #5c5c5c;
+    --nav-bg: rgb(28 28 30 / 0.85);
+    --head-bg: rgb(0 0 0 / 0.85);
+    --chart-bar: #1f6f3a;
 
     --heat-0: #161b22;
     --heat-1: #0e4429;
@@ -93,7 +118,7 @@
     --heat-3: #26a641;
     --heat-4: #39d353;
     --heat-outline: rgb(255 255 255 / 0.05);
-    --heat-today: #f2f2f2;
+    --heat-today: #f5f5f7;
 
     color-scheme: dark;
   }

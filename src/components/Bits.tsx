@@ -96,9 +96,9 @@ export function MuscleTags({ exerciseId }: { exerciseId: string }) {
   )
 }
 
-export function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
+export function Stat({ label, value, sub, highlight }: { label: string; value: ReactNode; sub?: ReactNode; highlight?: boolean }) {
   return (
-    <div className="stat">
+    <div className={`stat${highlight ? ' highlight' : ''}`}>
       <span className="stat-label">{label}</span>
       <span className="stat-value">{value}</span>
       {sub && <span className="stat-sub">{sub}</span>}

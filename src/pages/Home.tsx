@@ -26,23 +26,27 @@ export function Home() {
   const since = last ? daysBetween(last, now) : null
   const visits7 = visits.filter((d) => d >= addDays(now, -6)).length
   const visits30 = visits.filter((d) => d >= addDays(now, -29)).length
-  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
   return (
     <div className="page">
-      <PageHeader title={<h1>Gym</h1>} right={<Freshness />} />
+      <PageHeader title={<h1 className="large-title">Gym</h1>} right={<Freshness />} />
       <div className="grid-2">
         <SearchSelect options={exercises} placeholder="Workout" onPick={(id) => (window.location.hash = `#/exercise/${id}`)} />
         <SearchSelect options={muscles} placeholder="Muscle" onPick={(id) => (window.location.hash = `#/muscle/${id}`)} />
       </div>
-      <section className="section">
+      <section className="section card card-pad">
         <h2>Activity</h2>
         <Heatmap values={ix.setsPerDate} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
       </section>
       <section className="stats stats-3">
-        <Stat label="Since last visit" value={since === null ? '—' : plural(since, 'day')} sub={last ? shortDate(last) : undefined} />
-        <Stat label="Last 7 days" value={plural(visits7, 'visit')} />
-        <Stat label="Last 30 days" value={plural(visits30, 'visit')} />
+        <Stat
+          label="Last visit"
+          value={since ?? '—'}
+          sub={since === null ? undefined : `day${since === 1 ? '' : 's'} ago · ${shortDate(last)}`}
+          highlight
+        />
+        <Stat label="Last 7 days" value={visits7} sub={visits7 === 1 ? 'visit' : 'visits'} highlight />
+        <Stat label="Last 30 days" value={visits30} sub={visits30 === 1 ? 'visit' : 'visits'} highlight />
       </section>
       <section className="section">
         <h2>Gym sessions</h2>

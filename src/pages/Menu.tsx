@@ -42,7 +42,7 @@ function MenuHome({ email, onSignOut }: { email?: string; onSignOut: () => void 
   })()
   return (
     <div className="page">
-      <PageHeader title={<h1>Menu</h1>} />
+      <PageHeader title={<h1 className="large-title">Menu</h1>} />
       <section className="section">
         <h2>Lists</h2>
         <div className="menu-group">

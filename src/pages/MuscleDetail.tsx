@@ -51,7 +51,7 @@ export function MuscleDetail({ id }: { id: string }) {
           </div>
         }
       />
-      <section className="section">
+      <section className="section card card-pad">
         <h2>Activity</h2>
         <Heatmap values={setsPerDate(ix, logs)} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
       </section>
@@ -61,7 +61,7 @@ export function MuscleDetail({ id }: { id: string }) {
         <Stat label="Sessions / week" value={recent.toFixed(1)} sub="last 4 weeks" />
         <Stat label="Sessions" value={dates.length} sub="all time" />
       </section>
-      <section className="section">
+      <section className="section card card-pad">
         <Chart kind="bar" label="Sessions per week" points={weeks} format={(v) => `${Math.round(v * 10) / 10}`} />
       </section>
       <section className="section">

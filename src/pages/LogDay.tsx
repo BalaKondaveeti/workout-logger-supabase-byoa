@@ -257,7 +257,7 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
         </a>
       </PageHeader>
 
-      <section className="section">
+      <section className="section card card-pad">
         <label className="field">
           <span>Date</span>
           <input

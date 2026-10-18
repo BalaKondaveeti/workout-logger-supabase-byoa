@@ -45,7 +45,7 @@ export function ExerciseDetail({ id }: { id: string }) {
       {editing ? (
         <ExerciseForm exercise={ex} onDone={() => setEditing(false)} onCancel={() => setEditing(false)} />
       ) : (
-        <section className="section">
+        <section className="section card card-pad">
           {ex.archived && <p className="hint">Hidden from pickers. Unhide it under Menu → Exercises.</p>}
           <MuscleTags exerciseId={id} />
           <label className="field">
@@ -61,7 +61,7 @@ export function ExerciseDetail({ id }: { id: string }) {
         </section>
       )}
 
-      <section className="section">
+      <section className="section card card-pad">
         <h2>Activity</h2>
         <Heatmap values={setsPerDate(ix, logs)} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
       </section>
@@ -77,7 +77,7 @@ export function ExerciseDetail({ id }: { id: string }) {
       <p className="hint">Estimated 1RM uses Epley: weight × (1 + reps / 30).</p>
 
       {st.sessions.length > 0 && (
-        <section className="section">
+        <section className="section card card-pad">
           <Chart
             kind="line"
             label="Top weight per session"
