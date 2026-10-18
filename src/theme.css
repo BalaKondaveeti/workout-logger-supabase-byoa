@@ -1,0 +1,90 @@
+/*
+ * Design tokens. Restyle the whole app by editing this file only.
+ * Every color, font, size, radius and spacing value in styles.css comes from here.
+ * Monochrome on purpose: the only color in the app is each muscle's own tag color.
+ */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-size: 16px;
+  --font-size-input: 16px; /* never below 16px: iOS zooms into smaller inputs */
+  --font-size-sm: 13px;
+  --font-size-xs: 11px;
+  --font-size-lg: 22px;
+  --font-size-xl: 28px;
+  --font-size-num: 20px; /* set inputs, stat values */
+  --font-size-star: 28px;
+  --font-size-axis: 10px; /* chart axis labels (SVG units) */
+  --font-weight: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 600;
+
+  --bg: #ffffff;
+  --surface: #f5f5f5;
+  --surface-2: #ebebeb;
+  --text: #111111;
+  --muted: #8a8a8a;
+  --border: #ebebeb;
+  --accent: #111111; /* primary buttons, selected states, chart lines */
+  --accent-text: #ffffff;
+  --danger: #c0392b;
+  --danger-text: #ffffff;
+  --star: #111111;
+  --star-off: #d4d4d4;
+  --shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.15);
+
+  /* activity calendar: none -> most */
+  --heat-0: #f0f0f0;
+  --heat-1: #cfcfcf;
+  --heat-2: #9e9e9e;
+  --heat-3: #5c5c5c;
+  --heat-4: #111111;
+  --heat-today: #111111;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 4px;
+  --radius-pill: 999px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --tap: 44px; /* minimum tap target */
+  --tap-lg: 56px;
+  --content-width: 640px;
+  --nav-height: 60px;
+  --cell-max: 44px; /* calendar square max size */
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111111;
+    --surface: #1c1c1c;
+    --surface-2: #262626;
+    --text: #f2f2f2;
+    --muted: #8a8a8a;
+    --border: #262626;
+    --accent: #f2f2f2;
+    --accent-text: #111111;
+    --danger: #e57373;
+    --danger-text: #111111;
+    --star: #f2f2f2;
+    --star-off: #3a3a3a;
+    --shadow: 0 4px 16px rgb(0 0 0 / 0.5);
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.5);
+
+    --heat-0: #1e1e1e;
+    --heat-1: #3a3a3a;
+    --heat-2: #6b6b6b;
+    --heat-3: #a8a8a8;
+    --heat-4: #f2f2f2;
+    --heat-today: #f2f2f2;
+
+    color-scheme: dark;
+  }
+}
