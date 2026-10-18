@@ -5,10 +5,11 @@ import type { Unit } from './types'
 
 export type DisplayUnit = Unit | 'logged'
 
-type Prefs = { displayUnit: DisplayUnit; showSides: boolean }
+// sides: exercise id -> show the Left / Right checkboxes on its sets
+type Prefs = { displayUnit: DisplayUnit; sides: Record<string, boolean> }
 
 const KEY = 'gym.prefs'
-const DEFAULTS: Prefs = { displayUnit: 'logged', showSides: false }
+const DEFAULTS: Prefs = { displayUnit: 'logged', sides: {} }
 const listeners = new Set<() => void>()
 
 let prefs: Prefs = (() => {

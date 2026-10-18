@@ -17,7 +17,7 @@ export function DayMeta({ day }: { day: Day }) {
   if (day.check_in || day.check_out) {
     parts.push(`${prettyTime(day.check_in) || '…'}–${prettyTime(day.check_out) || '…'}${dur !== null ? ` (${prettyDuration(dur)})` : ''}`)
   }
-  if (day.pre_workout) parts.push('Pre-workout ✓')
+  if (day.pre_workout) parts.push('Pre-workout ⚡')
   return (
     <>
       {(parts.length > 0 || day.rating) && (

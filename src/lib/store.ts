@@ -5,11 +5,11 @@ import { sb } from './supabase'
 import { TABLES, type Data, type Table } from './types'
 
 // All of the user's gym data lives in memory, mirrored to localStorage per user + project.
-// Cached data shows instantly; it is re-fetched when older than an hour, on manual refresh,
+// Cached data shows instantly; it is re-fetched when older than 6 hours, on manual refresh,
 // and shortly after every write. Writes apply to the screen immediately and go to Supabase
 // through one ordered queue (inserts carry client-made ids, so later edits can follow them).
 
-export const MAX_AGE_MS = 60 * 60 * 1000
+export const MAX_AGE_MS = 6 * 60 * 60 * 1000
 const PAGE = 1000 // PostgREST's max rows per request
 const PREFIX = 'gym.cache.'
 const PATCH_DELAY_MS = 600
@@ -130,7 +130,7 @@ export function startStore(uid: string) {
   if (state.stale) refresh()
 }
 
-// Re-fetch once the data passes an hour, while open or when the app comes back to the foreground.
+// Re-fetch once the data passes 6 hours, while open or when the app comes back to the foreground.
 if (typeof window !== 'undefined') {
   const check = () => {
     if (!userId || document.visibilityState !== 'visible') return

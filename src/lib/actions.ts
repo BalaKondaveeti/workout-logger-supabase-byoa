@@ -70,6 +70,7 @@ export function addSet(logId: string): string {
 }
 
 export const deleteLog = (id: string) => deleteRow('logs', id)
+export const deleteDay = (id: string) => deleteRow('days', id)
 export const deleteSet = (id: string) => deleteRow('sets', id)
 
 export function moveLog(logId: string, dir: -1 | 1) {

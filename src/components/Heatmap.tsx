@@ -1,65 +1,77 @@
 import { addDays, parseDate, shortDate, today, weekStart } from '../lib/dates'
 
-// GitHub-style activity squares. `weeks-as-rows` reads like a calendar (Mon–Sun across),
-// `weeks-as-columns` is the classic contribution strip. Darker = more sets.
+const DAY_LABELS = ['Mon', '', 'Wed', '', 'Fri', '', '']
+
+// GitHub-style contribution calendar: one column per week (Mon at the top), one square per
+// day, greener = more sets. No numbers, just the squares.
 export function Heatmap({
   days,
   values,
   onTap,
-  layout = 'weeks-as-columns',
   unit = 'set',
+  size = 'md',
 }: {
   days: number
   values: Map<string, number>
   onTap?: (date: string) => void
-  layout?: 'weeks-as-rows' | 'weeks-as-columns'
   unit?: string
+  size?: 'md' | 'lg'
 }) {
   const end = today()
   const start = addDays(end, -(days - 1))
   const first = weekStart(start)
   const cells: (string | null)[] = []
   for (let d = first; d <= end; d = addDays(d, 1)) cells.push(d < start ? null : d)
-  const weeks = Math.ceil(cells.length / 7)
+  while (cells.length % 7) cells.push(null) // rest of the current week
+  const weeks = cells.length / 7
   let max = 0
   for (const d of cells) if (d) max = Math.max(max, values.get(d) ?? 0)
   const level = (v: number) => (v <= 0 || !max ? 0 : Math.max(1, Math.ceil((4 * v) / max)))
 
-  const rows = layout === 'weeks-as-rows'
-  const style = rows
-    ? { gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }
-    : { gridTemplateRows: 'repeat(7, auto)', gridTemplateColumns: `repeat(${weeks}, minmax(0, var(--cell-max)))` }
+  // Month name above the first week that starts in that month (and above week 1).
+  const months = Array.from({ length: weeks }, (_, w) => {
+    const day = cells.slice(w * 7, w * 7 + 7).find(Boolean)
+    if (!day) return ''
+    const prevDay = w ? cells.slice((w - 1) * 7, w * 7).find(Boolean) : null
+    const m = parseDate(day).getMonth()
+    return !prevDay || parseDate(prevDay).getMonth() !== m ? parseDate(day).toLocaleDateString(undefined, { month: 'short' }) : ''
+  })
+
+  const cols = { gridTemplateColumns: `var(--heat-label) repeat(${weeks}, var(--heat-cell))` }
+  const label = (d: string) => `${shortDate(d)}: ${values.get(d) ?? 0} ${unit}${values.get(d) === 1 ? '' : 's'}`
 
   return (
-    <div className="heatmap-wrap">
-      {rows && (
-        <div className="heatmap heatmap-head" style={style} aria-hidden>
-          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-            <span key={i}>{d}</span>
-          ))}
-        </div>
-      )}
-      <div className={`heatmap ${rows ? 'rows' : 'columns'}`} style={style}>
-        {cells.map((d, i) =>
-          d ? (
+    <div className={`heatmap-wrap heat-${size}`}>
+      <div className="heatmap heatmap-months" style={cols} aria-hidden>
+        <span />
+        {months.map((m, i) => (
+          <span key={i}>{m}</span>
+        ))}
+      </div>
+      <div className="heatmap" style={{ ...cols, gridTemplateRows: 'repeat(7, var(--heat-cell))' }}>
+        {DAY_LABELS.map((l, i) => (
+          <span key={`l${i}`} className="heatmap-day" style={{ gridColumn: 1, gridRow: i + 1 }} aria-hidden>
+            {l}
+          </span>
+        ))}
+        {cells.map((d, i) => {
+          const pos = { gridColumn: Math.floor(i / 7) + 2, gridRow: (i % 7) + 1 }
+          if (!d || d > end) return <span key={`p${i}`} className="cell pad" style={pos} />
+          return (
             <button
               key={d}
               type="button"
               className={`cell l${level(values.get(d) ?? 0)}${d === end ? ' today' : ''}`}
-              aria-label={`${shortDate(d)}: ${values.get(d) ?? 0} ${unit}s`}
-              title={`${shortDate(d)}: ${values.get(d) ?? 0} ${unit}s`}
+              style={pos}
+              aria-label={label(d)}
+              title={label(d)}
               disabled={!onTap}
               onClick={() => onTap?.(d)}
-            >
-              {rows && <span>{parseDate(d).getDate()}</span>}
-            </button>
-          ) : (
-            <span key={`pad${i}`} className="cell pad" />
-          ),
-        )}
+            />
+          )
+        })}
       </div>
       <div className="heatmap-legend" aria-hidden>
-        <span>{shortDate(start)}</span>
         <span className="grow" />
         <span>Less</span>
         {[0, 1, 2, 3, 4].map((l) => (

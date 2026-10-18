@@ -40,7 +40,7 @@ npm run build
 
 All of a user's gym rows are fetched (paged 1000 rows per request) and cached in
 localStorage per user + project. Cached data shows instantly; it refreshes after any
-write, when older than an hour, or with the refresh button. Edits apply on screen at once
+write, when older than 6 hours, or with the refresh button. Edits apply on screen at once
 and are saved through an ordered queue. If Supabase can't be reached (free projects pause
 after about a week idle), a notice links to the dashboard to restore it, with a Retry.
 

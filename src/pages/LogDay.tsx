@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { MuscleTags, PageHeader, Stars } from '../components/Bits'
-import { ExerciseForm } from '../components/ExerciseForm'
 import { DownIcon, UpIcon, CloseIcon, ChevronIcon } from '../components/Icons'
-import { SearchSelect } from '../components/SearchSelect'
 import { SaveStatus } from '../components/SaveStatus'
-import { addLog, addSet, deleteLog, deleteSet, moveLog, updateDay } from '../lib/actions'
-import { byName, lastTime, useIndex } from '../lib/derive'
+import { addSet, deleteDay, deleteLog, deleteSet, moveLog, updateDay } from '../lib/actions'
+import { lastTime, useIndex } from '../lib/derive'
 import { durationMinutes, hhmm, isISODate, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
 import { setPref, usePrefs } from '../lib/prefs'
 import { updateRow } from '../lib/store'
@@ -138,13 +136,15 @@ function LogEditor({
   isLast: boolean
 }) {
   const ix = useIndex()
-  const { displayUnit, showSides } = usePrefs()
+  const { displayUnit, sides } = usePrefs()
   const [focusSet, setFocusSet] = useState<string | null>(null)
   const ex = ix.exercise.get(log.exercise_id)
   const sets = ix.setsOfLog.get(log.id) ?? []
   const prev = lastTime(ix, log.exercise_id, date)
   const prevSets = prev ? (ix.setsOfLog.get(prev.id) ?? []) : []
   const ref = useRef<HTMLDivElement>(null)
+  // Left / Right checkboxes: remembered per exercise, and always on when a set already uses them
+  const showSides = sides[log.exercise_id] ?? sets.some((s) => s.side)
 
   useEffect(() => {
     if (open && new URLSearchParams(window.location.hash.split('?')[1]).get('log') === log.id) {
@@ -187,6 +187,11 @@ function LogEditor({
               <span className="muted">First time</span>
             )}
           </div>
+          <Switch
+            label="Left / right"
+            checked={showSides}
+            onChange={(v) => setPref('sides', { ...sides, [log.exercise_id]: v })}
+          />
           {sets.map((s, i) => (
             <SetRow key={s.id} set={s} n={i + 1} focus={s.id === focusSet} showSides={showSides} />
           ))}
@@ -228,53 +233,12 @@ function LogEditor({
   )
 }
 
-function AddExercise({ date, onAdded, onCancel }: { date: string; onAdded: (logId: string) => void; onCancel: () => void }) {
-  const ix = useIndex()
-  const [creating, setCreating] = useState<string | null>(null)
-  if (creating !== null) {
-    return (
-      <ExerciseForm
-        initialName={creating}
-        onDone={(id) => onAdded(addLog(date, id))}
-        onCancel={() => setCreating(null)}
-      />
-    )
-  }
-  const options = ix.data.exercises
-    .filter((e) => !e.archived)
-    .sort(byName)
-    .map((e) => {
-      const m = e.primary_muscle_id ? ix.muscle.get(e.primary_muscle_id) : undefined
-      return { id: e.id, label: e.name, color: m?.color, sub: m?.name }
-    })
-  return (
-    <div className="panel">
-      <div className="inline">
-        <h2 className="grow">Add exercise</h2>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-      <SearchSelect
-        startOpen
-        options={options}
-        placeholder="Choose an exercise"
-        onPick={(id) => onAdded(addLog(date, id))}
-        addLabel="Add new exercise"
-        onAdd={(q) => setCreating(q)}
-      />
-    </div>
-  )
-}
-
 export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?: string }) {
   const date = routeDate && isISODate(routeDate) ? routeDate : today()
   const ix = useIndex()
-  const { showSides } = usePrefs()
   const day = ix.dayByDate.get(date)
   const logs = day ? (ix.logsOfDay.get(day.id) ?? []) : []
   const [openLogs, setOpenLogs] = useState<Set<string>>(() => new Set(focusLog ? [focusLog] : []))
-  const [adding, setAdding] = useState(false)
   const dur = durationMinutes(day?.check_in ?? null, day?.check_out ?? null)
 
   const toggle = (id: string) =>
@@ -287,7 +251,11 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
 
   return (
     <div className="page">
-      <PageHeader back="history" title={date === today() ? 'Today' : longDate(date)} right={<SaveStatus />} />
+      <PageHeader back="#/" title={date === today() ? 'Today' : longDate(date)} right={<SaveStatus />}>
+        <a className="btn btn-primary btn-block btn-big head-action" href={`#/log/${date}/add`}>
+          + Add exercise
+        </a>
+      </PageHeader>
 
       <section className="section">
         <label className="field">
@@ -319,7 +287,10 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
           ))}
         </div>
         {dur !== null && <p className="hint">Duration {prettyDuration(dur)}</p>}
-        <Switch label="Pre-workout" checked={!!day?.pre_workout} onChange={(v) => updateDay(date, { pre_workout: v })} />
+        <label className="check check-lg">
+          <input type="checkbox" checked={!!day?.pre_workout} onChange={(e) => updateDay(date, { pre_workout: e.target.checked })} />
+          Pre-workout ⚡
+        </label>
         {day?.pre_workout && (
           <input
             className="input"
@@ -344,11 +315,8 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
       </section>
 
       <section className="section">
-        <div className="inline">
-          <h2 className="grow">Exercises</h2>
-          <Switch label="Left / right" checked={showSides} onChange={(v) => setPref('showSides', v)} />
-        </div>
-        {logs.length === 0 && !adding && <p className="hint">Nothing logged for this day yet.</p>}
+        <h2>Exercises</h2>
+        {logs.length === 0 && <p className="hint">Nothing logged for this day yet. Tap “+ Add exercise” above.</p>}
         {logs.map((l, i) => (
           <LogEditor
             key={l.id}
@@ -360,21 +328,22 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
             isLast={i === logs.length - 1}
           />
         ))}
-        {adding ? (
-          <AddExercise
-            date={date}
-            onCancel={() => setAdding(false)}
-            onAdded={(id) => {
-              setAdding(false)
-              setOpenLogs((s) => new Set([...s, id]))
-            }}
-          />
-        ) : (
-          <button type="button" className="btn btn-primary btn-block btn-big" onClick={() => setAdding(true)}>
-            + Add exercise
-          </button>
-        )}
       </section>
+
+      {day && (
+        <button
+          type="button"
+          className="btn btn-danger btn-block"
+          onClick={() => {
+            const n = logs.reduce((sum, l) => sum + (ix.setsOfLog.get(l.id)?.length ?? 0), 0)
+            if (!confirm(`Delete ${longDate(date)} completely? This removes the day, ${logs.length} exercise${logs.length === 1 ? '' : 's'} and ${n} set${n === 1 ? '' : 's'}.`)) return
+            deleteDay(day.id)
+            window.location.replace('#/')
+          }}
+        >
+          Delete this day
+        </button>
+      )}
     </div>
   )
 }

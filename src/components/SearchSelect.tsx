@@ -13,6 +13,7 @@ export function SearchSelect({
   addLabel,
   onAdd,
   startOpen = false,
+  onClose,
 }: {
   options: Option[]
   value?: string | null
@@ -21,6 +22,7 @@ export function SearchSelect({
   addLabel?: string
   onAdd?: (query: string) => void
   startOpen?: boolean
+  onClose?: () => void // full-screen use: closing leaves the screen
 }) {
   const [open, setOpen] = useState(startOpen)
   const [query, setQuery] = useState('')
@@ -38,10 +40,14 @@ export function SearchSelect({
 
   const q = query.trim().toLowerCase()
   const shown = q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options
+  // after a pick: collapse (inline use only; a full screen navigates in onPick)
   const close = () => {
+    if (onClose) return
     setOpen(false)
     setQuery('')
   }
+  // X / Escape: leave the full screen, or collapse
+  const dismiss = () => (onClose ? onClose() : close())
 
   return (
     <div className="select-open">
@@ -53,7 +59,7 @@ export function SearchSelect({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Escape') close()
+            if (e.key === 'Escape') dismiss()
             if (e.key === 'Enter' && shown.length === 1) {
               e.preventDefault()
               onPick(shown[0].id)
@@ -63,11 +69,11 @@ export function SearchSelect({
           autoCapitalize="off"
           autoCorrect="off"
         />
-        <button type="button" className="icon-btn" aria-label="Close" onClick={close}>
+        <button type="button" className="icon-btn" aria-label="Close" onClick={dismiss}>
           <CloseIcon />
         </button>
       </div>
-      <div className="select-list" role="listbox">
+      <div className={`select-list${onClose ? ' full' : ''}`} role="listbox">
         {shown.map((o) => (
           <button
             key={o.id}

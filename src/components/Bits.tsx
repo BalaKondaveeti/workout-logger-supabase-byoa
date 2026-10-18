@@ -4,7 +4,7 @@ import type { Muscle } from '../lib/types'
 import { BackIcon } from './Icons'
 
 // Pinned page header. `back` is a hash to go to (or history back when 'history').
-export function PageHeader({ title, back, right }: { title: ReactNode; back?: string; right?: ReactNode }) {
+export function PageHeader({ title, back, right, children }: { title: ReactNode; back?: string; right?: ReactNode; children?: ReactNode }) {
   return (
     <header className="sticky-head">
       <div className="page-head">
@@ -26,6 +26,7 @@ export function PageHeader({ title, back, right }: { title: ReactNode; back?: st
         <div className="grow page-title">{title}</div>
         {right}
       </div>
+      {children}
     </header>
   )
 }

@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
 import { ErrorNotice } from './components/ErrorNotice'
-import { DumbbellIcon, HomeIcon, MenuIcon } from './components/Icons'
+import { BarbellIcon, MenuIcon, PlusIcon } from './components/Icons'
 import { Login } from './components/Login'
 import { Setup } from './components/Setup'
 import { today } from './lib/dates'
@@ -9,13 +9,14 @@ import { clearCache, refresh, resetStore, retryWrites, startStore, useStore } fr
 import { initSupabase, sb } from './lib/supabase'
 import { ExerciseDetail } from './pages/ExerciseDetail'
 import { Home } from './pages/Home'
+import { AddExercise } from './pages/AddExercise'
 import { LogDay } from './pages/LogDay'
 import { Menu } from './pages/Menu'
 import { MuscleDetail } from './pages/MuscleDetail'
 
 const TABS = [
-  { section: 'home', href: '#/', label: 'Home', icon: <HomeIcon />, showLabel: true },
-  { section: 'log', href: '#/log', label: 'Log', icon: <DumbbellIcon />, showLabel: true },
+  { section: 'home', href: '#/', label: 'Home', icon: <BarbellIcon />, showLabel: true },
+  { section: 'log', href: '#/log', label: 'Log', icon: <PlusIcon />, showLabel: true },
   { section: 'menu', href: '#/menu', label: 'Menu', icon: <MenuIcon />, showLabel: false },
 ]
 
@@ -126,7 +127,9 @@ function Main({ userId, email, onChangeProject }: { userId: string; email?: stri
             <ErrorNotice error={writeError || error} onRetry={writeError ? retryWrites : refresh} />
           </div>
         )}
-        {parts[0] === 'log' ? (
+        {parts[0] === 'log' && parts[2] === 'add' ? (
+          <AddExercise key={hash} date={parts[1]} />
+        ) : parts[0] === 'log' ? (
           <LogDay key={parts[1] ?? 'today'} date={parts[1]} focusLog={query.get('log') ?? undefined} />
         ) : parts[0] === 'exercise' && parts[1] ? (
           <ExerciseDetail key={parts[1]} id={parts[1]} />
