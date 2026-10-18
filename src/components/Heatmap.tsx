@@ -1,27 +1,47 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { addDays, parseDate, shortDate, today, weekStart } from '../lib/dates'
 
 const DAY_LABELS = ['Mon', '', 'Wed', '', 'Fri', '', '']
 
-// GitHub-style contribution calendar: one column per week (Mon at the top), one square per
-// day, greener = more sets. No numbers, just the squares, stretched to the full width.
+// How many week-columns fit: the width divided by the target square size from theme.css.
+function useFittedWeeks() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [weeks, setWeeks] = useState(17)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => {
+      const css = getComputedStyle(el)
+      const px = (name: string) => parseFloat(css.getPropertyValue(name)) || 0
+      const cell = px('--heat-cell-target') || 16
+      const gap = px('--heat-gap')
+      const label = px('--heat-label')
+      setWeeks(Math.max(4, Math.floor((el.clientWidth - label) / (cell + gap))))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return { ref, weeks }
+}
+
+// GitHub-style contribution calendar: one column per week (Mon at the top), one small square
+// per day, greener = more sets. Shows as many weeks as fill the width, ending this week.
 export function Heatmap({
-  days,
   values,
   onTap,
   unit = 'set',
 }: {
-  days: number
   values: Map<string, number>
   onTap?: (date: string) => void
   unit?: string
 }) {
+  const { ref, weeks } = useFittedWeeks()
   const end = today()
-  const start = addDays(end, -(days - 1))
-  const first = weekStart(start)
+  const first = addDays(weekStart(end), -7 * (weeks - 1))
   const cells: (string | null)[] = []
-  for (let d = first; d <= end; d = addDays(d, 1)) cells.push(d < start ? null : d)
-  while (cells.length % 7) cells.push(null) // rest of the current week
-  const weeks = cells.length / 7
+  for (let i = 0; i < weeks * 7; i++) cells.push(addDays(first, i))
   let max = 0
   for (const d of cells) if (d) max = Math.max(max, values.get(d) ?? 0)
   const level = (v: number) => (v <= 0 || !max ? 0 : Math.max(1, Math.ceil((4 * v) / max)))
@@ -40,7 +60,7 @@ export function Heatmap({
   const label = (d: string) => `${shortDate(d)}: ${values.get(d) ?? 0} ${unit}${values.get(d) === 1 ? '' : 's'}`
 
   return (
-    <div className="heatmap-wrap">
+    <div className="heatmap-wrap" ref={ref}>
       <div className="heatmap heatmap-months" style={cols} aria-hidden>
         <span />
         {months.map((m, i) => (
@@ -71,7 +91,7 @@ export function Heatmap({
         })}
       </div>
       <div className="heatmap-legend" aria-hidden>
-        <span className="grow" />
+        <span className="grow">Since {shortDate(first)}</span>
         <span>Less</span>
         {[0, 1, 2, 3, 4].map((l) => (
           <i key={l} className={`cell l${l}`} />

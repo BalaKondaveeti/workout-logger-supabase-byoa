@@ -62,8 +62,8 @@ export function ExerciseDetail({ id }: { id: string }) {
       )}
 
       <section className="section">
-        <h2>Last 90 days</h2>
-        <Heatmap days={90} values={setsPerDate(ix, logs)} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
+        <h2>Activity</h2>
+        <Heatmap values={setsPerDate(ix, logs)} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
       </section>
 
       <section className="stats">

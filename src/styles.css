@@ -793,6 +793,10 @@ input[type='time'].input {
   border-radius: 2px;
 }
 
+.heatmap-legend .grow {
+  margin: 0;
+}
+
 .heatmap-legend span:not(.grow) {
   margin: 0 2px;
 }

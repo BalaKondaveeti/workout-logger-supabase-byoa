@@ -36,8 +36,8 @@ export function Home() {
         <SearchSelect options={muscles} placeholder="Muscle" onPick={(id) => (window.location.hash = `#/muscle/${id}`)} />
       </div>
       <section className="section">
-        <h2>Last 50 days</h2>
-        <Heatmap days={50} values={ix.setsPerDate} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
+        <h2>Activity</h2>
+        <Heatmap values={ix.setsPerDate} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
       </section>
       <section className="stats stats-3">
         <Stat label="Since last visit" value={since === null ? '—' : plural(since, 'day')} sub={last ? shortDate(last) : undefined} />
