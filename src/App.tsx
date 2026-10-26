@@ -6,6 +6,7 @@ import { Login } from './components/Login'
 import { Setup } from './components/Setup'
 import { today } from './lib/dates'
 import { clearCache, refresh, resetStore, retryWrites, startStore, useStore } from './lib/store'
+import { daysSinceLastVisit, restLevel } from './lib/stats'
 import { initSupabase, sb } from './lib/supabase'
 import { ExerciseDetail } from './pages/ExerciseDetail'
 import { Home } from './pages/Home'
@@ -79,10 +80,36 @@ export default function App() {
   return <Main key={session.user.id} userId={session.user.id} email={session.user.email} onChangeProject={changeProject} />
 }
 
+// More than 5 days since the last visit: switch the app to the red "overdue" theme
+// (tokens in theme.css under [data-mood='overdue']) and match the browser/status bar color.
+function useOverdueTheme(on: boolean) {
+  useEffect(() => {
+    const root = document.documentElement
+    const metas = [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')]
+    const original = metas.map((m) => m.content)
+    if (!on) return
+    root.dataset.mood = 'overdue'
+    const dark = window.matchMedia('(prefers-color-scheme: dark)')
+    const sync = () => {
+      const bg = getComputedStyle(root).getPropertyValue('--bg').trim()
+      metas.forEach((m) => (m.content = bg))
+    }
+    sync()
+    dark.addEventListener('change', sync)
+    return () => {
+      dark.removeEventListener('change', sync)
+      delete root.dataset.mood
+      metas.forEach((m, i) => (m.content = original[i]))
+    }
+  }, [on])
+}
+
 function Main({ userId, email, onChangeProject }: { userId: string; email?: string; onChangeProject: () => void }) {
   const hash = useHashRoute()
   const { data, error, writeError } = useStore()
   useEffect(() => startStore(userId), [userId])
+  const overdue = data ? restLevel(daysSinceLastVisit(data.days.map((d) => d.date))) === 'overdue' : false
+  useOverdueTheme(overdue)
 
   if (!data) {
     return (

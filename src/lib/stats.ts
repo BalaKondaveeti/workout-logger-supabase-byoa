@@ -1,4 +1,4 @@
-import { addDays, today, weekStart } from './dates'
+import { addDays, daysBetween, today, weekStart } from './dates'
 import type { Index } from './derive'
 import type { GymSet, Log } from './types'
 import { e1rmKg, toKg, volumeKg } from './units'
@@ -68,4 +68,20 @@ export function setsPerDate(ix: Index, logs: Log[]) {
     m.set(d, (m.get(d) ?? 0) + (ix.setsOfLog.get(l.id)?.length ?? 0))
   }
   return m
+}
+
+// Days since the most recent gym visit on or before today (null if none yet).
+export function daysSinceLastVisit(dates: string[], now = today()): number | null {
+  let last: string | undefined
+  for (const d of dates) if (d <= now && (!last || d > last)) last = d
+  return last ? daysBetween(last, now) : null
+}
+
+// How overdue the next visit is: >1 day yellow, >3 red, >5 the whole app turns red.
+export type RestLevel = 'ok' | 'warn' | 'alert' | 'overdue'
+export function restLevel(since: number | null): RestLevel {
+  if (since === null || since <= 1) return 'ok'
+  if (since <= 3) return 'warn'
+  if (since <= 5) return 'alert'
+  return 'overdue'
 }

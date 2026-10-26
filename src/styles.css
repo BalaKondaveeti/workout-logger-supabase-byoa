@@ -1390,6 +1390,14 @@ input[type='time'].input {
   color: var(--accent-ink);
 }
 
+.stat.tone-warn .stat-value {
+  color: var(--warn-ink);
+}
+
+.stat.tone-alert .stat-value {
+  color: var(--alert-ink);
+}
+
 .stat-sub {
   font-size: var(--font-size-sm);
   color: var(--muted);

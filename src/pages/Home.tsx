@@ -4,6 +4,7 @@ import { Heatmap } from '../components/Heatmap'
 import { Freshness } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
 import { byName, useIndex } from '../lib/derive'
+import { restLevel } from '../lib/stats'
 import { addDays, daysBetween, shortDate, today } from '../lib/dates'
 
 export function Home() {
@@ -24,6 +25,7 @@ export function Home() {
   const visits = ix.dates.filter((d) => d <= now)
   const last = visits[0]
   const since = last ? daysBetween(last, now) : null
+  const level = restLevel(since)
   const visits7 = visits.filter((d) => d >= addDays(now, -6)).length
   const visits30 = visits.filter((d) => d >= addDays(now, -29)).length
 
@@ -44,6 +46,7 @@ export function Home() {
           value={since ?? '—'}
           sub={since === null ? undefined : `day${since === 1 ? '' : 's'} ago · ${shortDate(last)}`}
           highlight
+          tone={level === 'warn' ? 'warn' : level === 'ok' ? undefined : 'alert'}
         />
         <Stat label="Last 7 days" value={visits7} sub={visits7 === 1 ? 'visit' : 'visits'} highlight />
         <Stat label="Last 30 days" value={visits30} sub={visits30 === 1 ? 'visit' : 'visits'} highlight />
