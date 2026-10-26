@@ -11,7 +11,7 @@ import { daysSinceLastVisit, restLevel } from './lib/stats'
 import { initSupabase, sb } from './lib/supabase'
 import { ExerciseDetail } from './pages/ExerciseDetail'
 import { Home } from './pages/Home'
-import { AddExercise } from './pages/AddExercise'
+import { AddExercise, NewExercise } from './pages/AddExercise'
 import { LogDay } from './pages/LogDay'
 import { Menu } from './pages/Menu'
 import { MuscleDetail } from './pages/MuscleDetail'
@@ -155,7 +155,11 @@ function Main({ userId, email, onChangeProject }: { userId: string; email?: stri
             <ErrorNotice error={writeError || error} onRetry={writeError ? retryWrites : refresh} />
           </div>
         )}
-        {parts[0] === 'log' && parts[2] === 'add' ? (
+        {parts[0] === 'log' && parts[2] === 'new' ? (
+          <NewExercise key={hash} date={parts[1]} name={query.get('name') ?? ''} />
+        ) : parts[0] === 'menu' && parts[1] === 'exercises' && parts[2] === 'new' ? (
+          <NewExercise key={hash} done="#/menu/exercises" cancel="#/menu/exercises" />
+        ) : parts[0] === 'log' && parts[2] === 'add' ? (
           <AddExercise key={hash} date={parts[1]} />
         ) : parts[0] === 'log' ? (
           <LogDay key={parts[1] ?? 'today'} date={parts[1]} focusLog={query.get('log') ?? undefined} />

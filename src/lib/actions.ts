@@ -43,13 +43,13 @@ export function addLog(date: string, exerciseId: string): string {
   return log.id
 }
 
-// Set 1 copies set 1 of last time; later sets copy the set above. Reps are always left blank.
+// Set 1 copies set 1 of last time; later sets copy the set above (weight, unit, reps, each-arm, side).
 export function addSet(logId: string): string {
   const index = ix()
   const log = index.data.logs.find((l) => l.id === logId)!
   const sets = index.setsOfLog.get(logId) ?? []
   const above = sets[sets.length - 1]
-  let template: Pick<GymSet, 'weight' | 'unit' | 'per_arm' | 'side'> | undefined = above
+  let template: Pick<GymSet, 'weight' | 'unit' | 'reps' | 'per_arm' | 'side'> | undefined = above
   if (!template) {
     const prev = lastTime(index, log.exercise_id, index.logDate(log))
     template = prev ? index.setsOfLog.get(prev.id)?.[0] : undefined
@@ -60,7 +60,7 @@ export function addSet(logId: string): string {
     position: above ? above.position + 1 : 0,
     weight: template?.weight ?? null,
     unit: template?.unit ?? index.exercise.get(log.exercise_id)?.default_unit ?? 'kg',
-    reps: null,
+    reps: template?.reps ?? null,
     per_arm: template?.per_arm ?? false,
     side: template?.side ?? null,
     note: null,

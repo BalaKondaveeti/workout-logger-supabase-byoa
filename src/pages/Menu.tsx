@@ -161,7 +161,7 @@ function TrashCard({ t }: { t: TrashedDay }) {
 
 function Exercises() {
   const ix = useIndex()
-  const [editing, setEditing] = useState<string | null>(null) // exercise id or 'new'
+  const [editing, setEditing] = useState<string | null>(null) // exercise id being edited inline
   const [showHidden, setShowHidden] = useState(false)
   const list = ix.data.exercises.filter((e) => showHidden || !e.archived).sort(byName)
   const hiddenCount = ix.data.exercises.filter((e) => e.archived).length
@@ -169,13 +169,9 @@ function Exercises() {
   return (
     <div className="page">
       <PageHeader back="#/menu" title={<h1>Exercises</h1>} />
-      {editing === 'new' ? (
-        <ExerciseForm onDone={() => setEditing(null)} onCancel={() => setEditing(null)} />
-      ) : (
-        <button className="btn btn-primary btn-block" onClick={() => setEditing('new')}>
-          + Add exercise
-        </button>
-      )}
+      <a className="btn btn-primary btn-block" href="#/menu/exercises/new">
+        + Add exercise
+      </a>
       <div className="list">
         {list.map((e) => {
           const m = e.primary_muscle_id ? ix.muscle.get(e.primary_muscle_id) : undefined

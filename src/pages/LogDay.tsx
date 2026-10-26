@@ -6,7 +6,7 @@ import { addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../l
 import { lastTime, useIndex } from '../lib/derive'
 import { durationMinutes, hhmm, isISODate, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
 import { setPref, usePrefs } from '../lib/prefs'
-import { updateRow } from '../lib/store'
+import { getData, updateRow } from '../lib/store'
 import type { GymSet, Log } from '../lib/types'
 import { fmtSets } from '../lib/units'
 
@@ -195,7 +195,10 @@ function LogEditor({
           {sets.map((s, i) => (
             <SetRow key={s.id} set={s} n={i + 1} focus={s.id === focusSet} showSides={showSides} />
           ))}
-          <button type="button" className="btn btn-block btn-big" onClick={() => setFocusSet(addSet(log.id))}>
+          <button type="button" className="btn btn-block btn-big" onClick={() => {
+              const id = addSet(log.id)
+              setFocusSet(getData()!.sets.find((s) => s.id === id)?.reps == null ? id : null)
+            }}>
             + Add set
           </button>
           <div className="field">
