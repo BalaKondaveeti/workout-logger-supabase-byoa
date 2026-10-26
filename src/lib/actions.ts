@@ -70,7 +70,37 @@ export function addSet(logId: string): string {
 }
 
 export const deleteLog = (id: string) => deleteRow('logs', id)
-export const deleteDay = (id: string) => deleteRow('days', id)
+// Deleting a day moves it to Menu → Recently deleted; only "Delete permanently" there removes it.
+export const trashDay = (id: string) => updateRow('days', id, { deleted_at: new Date().toISOString() }, true)
+
+// Permanent delete (manual only, from Recently deleted). Logs and sets cascade.
+export const deleteDayForever = (id: string) => deleteRow('days', id)
+
+// Restore a deleted day. If that date already has a live day, its exercises are moved into
+// it (appended) and empty day fields are filled in; the emptied row stays deleted (never hard-deleted here).
+export function restoreDay(id: string) {
+  const raw = getData()!
+  const day = raw.days.find((d) => d.id === id)
+  if (!day) return
+  const index = ix()
+  const live = index.dayByDate.get(day.date)
+  if (!live) return updateRow('days', id, { deleted_at: null }, true)
+
+  const liveLogs = index.logsOfDay.get(live.id) ?? []
+  let pos = liveLogs.length ? Math.max(...liveLogs.map((l) => l.position)) + 1 : 0
+  raw.logs
+    .filter((l) => l.day_id === id)
+    .sort((a, b) => a.position - b.position)
+    .forEach((l) => updateRow('logs', l.id, { day_id: live.id, position: pos++ }, true))
+
+  const patch: Partial<Day> = {}
+  if (!live.check_in && day.check_in) patch.check_in = day.check_in
+  if (!live.check_out && day.check_out) patch.check_out = day.check_out
+  if (!live.rating && day.rating) patch.rating = day.rating
+  if (!live.pre_workout && day.pre_workout) patch.pre_workout = true
+  if (day.notes && day.notes !== live.notes) patch.notes = live.notes ? `${live.notes}\n\n${day.notes}` : day.notes
+  if (Object.keys(patch).length) updateRow('days', live.id, patch, true)
+}
 export const deleteSet = (id: string) => deleteRow('sets', id)
 
 export function moveLog(logId: string, dir: -1 | 1) {

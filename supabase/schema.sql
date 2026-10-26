@@ -44,7 +44,7 @@ create table if not exists public.gym_days (
   pre_workout_note text,
   rating smallint check (rating between 1 and 5),
   notes text,
-  unique (user_id, date)
+  deleted_at timestamptz -- set = in Recently deleted; only "Delete permanently" removes the row
 );
 
 create table if not exists public.gym_logs (
@@ -93,6 +93,11 @@ create index if not exists gym_exercises_primary_idx on public.gym_exercises (pr
 create index if not exists gym_secondary_user_idx on public.gym_exercise_secondary_muscles (user_id);
 create index if not exists gym_secondary_muscle_idx on public.gym_exercise_secondary_muscles (muscle_id);
 create index if not exists gym_days_user_date_idx on public.gym_days (user_id, date desc);
+
+-- Soft delete for days: one live (not deleted) day per date; deleted days can share a date.
+alter table public.gym_days add column if not exists deleted_at timestamptz;
+alter table public.gym_days drop constraint if exists gym_days_user_id_date_key;
+create unique index if not exists gym_days_user_date_live_key on public.gym_days (user_id, date) where deleted_at is null;
 create index if not exists gym_logs_user_idx on public.gym_logs (user_id);
 create index if not exists gym_logs_day_idx on public.gym_logs (day_id);
 create index if not exists gym_logs_exercise_idx on public.gym_logs (exercise_id);

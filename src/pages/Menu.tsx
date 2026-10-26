@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { PageHeader } from '../components/Bits'
 import { ExerciseForm } from '../components/ExerciseForm'
+import { DateBadge, DayMeta, dayTimes, weekday } from '../components/Feed'
 import { RightIcon } from '../components/Icons'
-import { createMuscle, nextMuscleColor } from '../lib/actions'
+import { createMuscle, deleteDayForever, nextMuscleColor, restoreDay } from '../lib/actions'
 import { loadConfig } from '../lib/config'
-import { byName, useIndex } from '../lib/derive'
+import { byName, useIndex, type TrashedDay } from '../lib/derive'
+import { longDate, relativeDay, toISODate } from '../lib/dates'
 import { setPref, usePrefs, type DisplayUnit } from '../lib/prefs'
 import { updateRow, upsertRow, uuid } from '../lib/store'
-import { LB_PER_KG, num } from '../lib/units'
+import { fmtSets, LB_PER_KG, num } from '../lib/units'
 
 type Props = { path: string; email?: string; onSignOut: () => void; onChangeProject: () => void }
 
@@ -16,6 +18,7 @@ export function Menu({ path, email, onSignOut, onChangeProject }: Props) {
   if (path === 'muscles') return <Muscles />
   if (path === 'notes') return <Notes />
   if (path === 'units') return <Units />
+  if (path === 'deleted') return <RecentlyDeleted />
   if (path === 'connection') return <Connection onChangeProject={onChangeProject} />
   return <MenuHome email={email} onSignOut={onSignOut} />
 }
@@ -63,6 +66,12 @@ function MenuHome({ email, onSignOut }: { email?: string; onSignOut: () => void 
         </div>
       </section>
       <section className="section">
+        <h2>Deleted</h2>
+        <div className="menu-group">
+          <Item href="#/menu/deleted" label="Recently deleted" detail={ix.trash.length ? String(ix.trash.length) : undefined} />
+        </div>
+      </section>
+      <section className="section">
         <h2>Account</h2>
         <div className="menu-group">
           <Item href="#/menu/connection" label="Supabase connection" detail={host} />
@@ -73,6 +82,80 @@ function MenuHome({ email, onSignOut }: { email?: string; onSignOut: () => void 
         </div>
       </section>
     </div>
+  )
+}
+
+// Deleted days wait here until restored or deleted permanently (by hand only).
+function RecentlyDeleted() {
+  const ix = useIndex()
+  return (
+    <div className="page">
+      <PageHeader back="#/menu" title={<h1>Recently deleted</h1>} />
+      <p className="hint">Deleted gym days stay here until you restore them or delete them permanently.</p>
+      {ix.trash.length === 0 ? (
+        <p className="empty">Nothing deleted.</p>
+      ) : (
+        <div className="feed">
+          {ix.trash.map((t) => (
+            <TrashCard key={t.day.id} t={t} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TrashCard({ t }: { t: TrashedDay }) {
+  const ix = useIndex()
+  const { displayUnit } = usePrefs()
+  const { day, logs, sets } = t
+  const merges = ix.dayByDate.has(day.date)
+  const restore = () => {
+    if (merges && !confirm(`${longDate(day.date)} already has a session. Add these ${logs.length} exercises to it?`)) return
+    restoreDay(day.id)
+  }
+  const forever = () => {
+    if (!confirm(`Permanently delete ${longDate(day.date)} (${logs.length} exercise${logs.length === 1 ? '' : 's'}, ${sets} set${sets === 1 ? '' : 's'})? This can't be undone.`)) return
+    deleteDayForever(day.id)
+  }
+  return (
+    <section className="feed-day card trash-day">
+      <div className="day-head">
+        <DateBadge date={day.date} />
+        <span className="grow day-head-main">
+          <span className="day-date">{weekday(day.date)}</span>
+          {dayTimes(day) && <span className="day-time">{dayTimes(day)}</span>}
+        </span>
+        {day.deleted_at && <span className="pill">Deleted {relativeDay(toISODate(new Date(day.deleted_at))).toLowerCase()}</span>}
+      </div>
+      <DayMeta day={day} exercises={logs.length} sets={sets} />
+      {logs.length > 0 && (
+        <div className="list">
+          {logs.map((l) => {
+            const ex = ix.exercise.get(l.exercise_id)
+            const m = ex?.primary_muscle_id ? ix.muscle.get(ex.primary_muscle_id) : undefined
+            const s = t.setsOfLog.get(l.id) ?? []
+            return (
+              <div key={l.id} className="row log-row">
+                <span className="muscle-bar" style={{ background: m?.color }} aria-hidden />
+                <div className="row-main">
+                  <span className="row-title">{ex?.name ?? 'Unknown exercise'}</span>
+                  {s.length > 0 && <div className="sets-inline">{fmtSets(s, displayUnit)}</div>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      <div className="trash-actions">
+        <button className="btn btn-primary" onClick={restore}>
+          {merges ? 'Restore into day' : 'Restore'}
+        </button>
+        <button className="btn btn-danger" onClick={forever}>
+          Delete permanently
+        </button>
+      </div>
+    </section>
   )
 }
 

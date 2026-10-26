@@ -3,7 +3,8 @@ import type { Data, Day, Exercise, GymSet, Log, Muscle } from './types'
 
 // Lookup tables built once per data snapshot.
 export type Index = {
-  data: Data
+  data: Data // live data only: deleted days and their logs/sets are left out
+  trash: TrashedDay[] // Recently deleted, newest deletion first
   muscle: Map<string, Muscle>
   exercise: Map<string, Exercise>
   secondaryOf: Map<string, string[]> // exercise id -> muscle ids
@@ -31,11 +32,24 @@ function group<T>(rows: T[], key: (r: T) => string) {
   return m
 }
 
+export type TrashedDay = { day: Day; logs: Log[]; sets: number; setsOfLog: Map<string, GymSet[]> }
+
 const cache = new WeakMap<Data, Index>()
 
-export function buildIndex(data: Data): Index {
-  const hit = cache.get(data)
+export function buildIndex(raw: Data): Index {
+  const hit = cache.get(raw)
   if (hit) return hit
+
+  // Deleted days stay in the database (and the store) until deleted permanently from
+  // Menu → Recently deleted; everything else in the app sees only live days.
+  const deletedIds = new Set(raw.days.filter((d) => d.deleted_at).map((d) => d.id))
+  const data: Data = deletedIds.size
+    ? (() => {
+        const logs = raw.logs.filter((l) => !deletedIds.has(l.day_id))
+        const logIds = new Set(logs.map((l) => l.id))
+        return { ...raw, days: raw.days.filter((d) => !d.deleted_at), logs, sets: raw.sets.filter((s) => logIds.has(s.log_id)) }
+      })()
+    : raw
 
   const day = new Map(data.days.map((d) => [d.id, d]))
   const logDate = (l: Log) => day.get(l.day_id)?.date ?? ''
@@ -52,8 +66,24 @@ export function buildIndex(data: Data): Index {
     setsPerDate.set(date, (setsPerDate.get(date) ?? 0) + (setsOfLog.get(l.id)?.length ?? 0))
   }
 
+  const liveDates = new Set(data.days.map((d) => d.date))
+  const trash = raw.days
+    .filter((d) => d.deleted_at)
+    .map((day) => {
+      const logs = raw.logs.filter((l) => l.day_id === day.id).sort(byPosition)
+      const ids = new Set(logs.map((l) => l.id))
+      const sets = raw.sets.filter((s) => ids.has(s.log_id))
+      const setsOfLog = group(sets, (s) => s.log_id)
+      setsOfLog.forEach((list) => list.sort(byPosition))
+      return { day, logs, sets: sets.length, setsOfLog }
+    })
+    // an emptied day whose exercises were restored into a live day on the same date has nothing left to show
+    .filter((t) => t.logs.length > 0 || !liveDates.has(t.day.date))
+    .sort((a, b) => (b.day.deleted_at ?? '').localeCompare(a.day.deleted_at ?? ''))
+
   const index: Index = {
     data,
+    trash,
     muscle: new Map(data.muscles.map((m) => [m.id, m])),
     exercise: new Map(data.exercises.map((e) => [e.id, e])),
     secondaryOf: new Map([...group(data.secondary, (s) => s.exercise_id)].map(([k, v]) => [k, v.map((s) => s.muscle_id)])),
@@ -66,7 +96,7 @@ export function buildIndex(data: Data): Index {
     dates: [...new Set(data.days.map((d) => d.date))].sort().reverse(),
     logDate,
   }
-  cache.set(data, index)
+  cache.set(raw, index)
   return index
 }
 

@@ -6,6 +6,7 @@ import { Login } from './components/Login'
 import { Setup } from './components/Setup'
 import { today } from './lib/dates'
 import { clearCache, refresh, resetStore, retryWrites, startStore, useStore } from './lib/store'
+import { buildIndex } from './lib/derive'
 import { daysSinceLastVisit, restLevel } from './lib/stats'
 import { initSupabase, sb } from './lib/supabase'
 import { ExerciseDetail } from './pages/ExerciseDetail'
@@ -108,7 +109,7 @@ function Main({ userId, email, onChangeProject }: { userId: string; email?: stri
   const hash = useHashRoute()
   const { data, error, writeError } = useStore()
   useEffect(() => startStore(userId), [userId])
-  const overdue = data ? restLevel(daysSinceLastVisit(data.days.map((d) => d.date))) === 'overdue' : false
+  const overdue = data ? restLevel(daysSinceLastVisit(buildIndex(data).dates)) === 'overdue' : false
   useOverdueTheme(overdue)
 
   if (!data) {

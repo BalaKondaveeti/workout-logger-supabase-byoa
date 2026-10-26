@@ -28,7 +28,7 @@ export function dayHours(day: Day) {
 }
 
 // Calendar-page style badge: "OCT" over "17"
-function DateBadge({ date }: { date: string }) {
+export function DateBadge({ date }: { date: string }) {
   const d = parseDate(date)
   return (
     <span className="date-badge" aria-hidden>
@@ -38,7 +38,7 @@ function DateBadge({ date }: { date: string }) {
   )
 }
 
-function weekday(date: string) {
+export function weekday(date: string) {
   const d = parseDate(date)
   const sameYear = d.getFullYear() === new Date().getFullYear()
   return d.toLocaleDateString(undefined, { weekday: 'long', ...(sameYear ? {} : { year: 'numeric' }) })

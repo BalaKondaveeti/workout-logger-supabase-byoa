@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MuscleTags, PageHeader, Stars } from '../components/Bits'
 import { DownIcon, UpIcon, CloseIcon, ChevronIcon } from '../components/Icons'
 import { SaveStatus } from '../components/SaveStatus'
-import { addSet, deleteDay, deleteLog, deleteSet, moveLog, updateDay } from '../lib/actions'
+import { addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
 import { lastTime, useIndex } from '../lib/derive'
 import { durationMinutes, hhmm, isISODate, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
 import { setPref, usePrefs } from '../lib/prefs'
@@ -328,8 +328,8 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
           className="btn btn-danger btn-block"
           onClick={() => {
             const n = logs.reduce((sum, l) => sum + (ix.setsOfLog.get(l.id)?.length ?? 0), 0)
-            if (!confirm(`Delete ${longDate(date)} completely? This removes the day, ${logs.length} exercise${logs.length === 1 ? '' : 's'} and ${n} set${n === 1 ? '' : 's'}.`)) return
-            deleteDay(day.id)
+            if (!confirm(`Delete ${longDate(date)} (${logs.length} exercise${logs.length === 1 ? '' : 's'}, ${n} set${n === 1 ? '' : 's'})? It goes to Menu → Recently deleted, where you can restore it.`)) return
+            trashDay(day.id)
             window.location.replace('#/')
           }}
         >

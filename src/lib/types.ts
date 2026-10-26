@@ -22,6 +22,7 @@ export type Day = Row & {
   pre_workout_note: string | null
   rating: number | null
   notes: string | null
+  deleted_at?: string | null // set = in Recently deleted (soft delete); missing before the column exists
 }
 
 export type Log = Row & {
