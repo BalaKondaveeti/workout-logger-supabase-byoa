@@ -130,8 +130,8 @@
 
 /*
  * Overdue: more than 5 days since the last gym visit. App.tsx sets data-mood="overdue"
- * on <html>; the accent turns red and the page takes a faint red tint.
- * The calendar keeps its greens. Both blocks set the same properties so the
+ * on <html>; the accent and the activity calendar turn red and the page takes a
+ * faint red tint. Both blocks set the same properties so the
  * light block never leaks into dark mode.
  */
 :root[data-mood='overdue'] {
@@ -142,6 +142,10 @@
   --accent-soft: #fee2e2;
   --accent-ink: #b91c1c;
   --chart-bar: #fca5a5;
+  --heat-1: #fecaca;
+  --heat-2: #f87171;
+  --heat-3: #dc2626;
+  --heat-4: #991b1b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -153,5 +157,9 @@
     --accent-soft: rgb(255 69 58 / 0.18);
     --accent-ink: #ff6961;
     --chart-bar: #7f1d1d;
+    --heat-1: #4c1110;
+    --heat-2: #8b1d1a;
+    --heat-3: #d0342c;
+    --heat-4: #ff5a4f;
   }
 }
