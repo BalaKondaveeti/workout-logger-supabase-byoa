@@ -166,11 +166,15 @@ textarea {
 
 .grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-3);
 }
 
-.grid-2 > .select-open {
+.grid-2 {
+  position: relative; /* floating select lists span the whole row */
+}
+
+.grid-2 > .select-open:not(.floating) {
   grid-column: 1 / -1;
 }
 
@@ -633,6 +637,40 @@ input[type='time'].input {
 
 .select-list.full {
   max-height: none;
+}
+
+/* Floating (Home pickers): the open control keeps the closed button's size and place;
+   the list floats over the page across the whole row instead of pushing content down. */
+.select-search {
+  cursor: text;
+  padding-right: 0;
+}
+
+.select-search input {
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  font-size: var(--font-size-input);
+  color: var(--text);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.select-search .icon-btn {
+  color: var(--muted);
+}
+
+.select-open.floating .select-list {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  right: 0;
+  z-index: 4;
+  box-shadow: var(--shadow-pop);
+  border: 1px solid var(--border);
 }
 
 .select-option {

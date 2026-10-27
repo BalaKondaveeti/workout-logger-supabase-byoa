@@ -49,6 +49,7 @@
   --star-off: #d1d1d6;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.15);
+  --shadow-pop: 0 10px 32px rgb(0 0 0 / 0.16), 0 2px 6px rgb(0 0 0 / 0.08); /* floating lists */
   --nav-bg: rgb(255 255 255 / 0.85);
   --head-bg: rgb(242 242 247 / 0.88);
   --chart-bar: #86efac;
@@ -112,6 +113,7 @@
     --star-off: #48484a;
     --shadow: none;
     --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.5);
+    --shadow-pop: 0 12px 36px rgb(0 0 0 / 0.7);
     --nav-bg: rgb(28 28 30 / 0.85);
     --head-bg: rgb(0 0 0 / 0.85);
     --chart-bar: #1f6f3a;

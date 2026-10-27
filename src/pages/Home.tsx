@@ -33,8 +33,8 @@ export function Home() {
     <div className="page">
       <PageHeader title={<h1 className="large-title">Gym</h1>} right={<Freshness />} />
       <div className="grid-2">
-        <SearchSelect options={exercises} placeholder="Workout" onPick={(id) => (window.location.hash = `#/exercise/${id}`)} />
-        <SearchSelect options={muscles} placeholder="Muscle" onPick={(id) => (window.location.hash = `#/muscle/${id}`)} />
+        <SearchSelect floating options={exercises} placeholder="Workout" onPick={(id) => (window.location.hash = `#/exercise/${id}`)} />
+        <SearchSelect floating options={muscles} placeholder="Muscle" onPick={(id) => (window.location.hash = `#/muscle/${id}`)} />
       </div>
       <section className="section card card-pad">
         <h2>Activity</h2>

@@ -200,6 +200,70 @@ function Exercises() {
           {showHidden ? 'Hide hidden' : `Show hidden (${hiddenCount})`}
         </button>
       )}
+      <PrefixTool />
+    </div>
+  )
+}
+
+// Add or remove a prefix (e.g. "[24S]") on every exercise name, hidden ones included.
+function PrefixTool() {
+  const ix = useIndex()
+  const [open, setOpen] = useState(false)
+  const [prefix, setPrefix] = useState('')
+  const p = prefix.trim()
+  const all = ix.data.exercises
+  const withIt = all.filter((e) => e.name.startsWith(`${p} `) || e.name === p)
+  const without = all.filter((e) => !withIt.includes(e))
+
+  const add = () => {
+    if (!p || !without.length) return
+    if (!confirm(`Add "${p} " to the start of ${without.length} exercise name${without.length === 1 ? '' : 's'}?`)) return
+    without.forEach((e) => updateRow('exercises', e.id, { name: `${p} ${e.name.trim()}` }, true))
+    setOpen(false)
+  }
+  const remove = () => {
+    if (!p || !withIt.length) return
+    if (!confirm(`Remove "${p} " from ${withIt.length} exercise name${withIt.length === 1 ? '' : 's'}?`)) return
+    withIt.forEach((e) => updateRow('exercises', e.id, { name: e.name.slice(p.length).trim() || e.name }, true))
+    setOpen(false)
+  }
+
+  if (!open) {
+    return (
+      <button className="btn btn-ghost" onClick={() => setOpen(true)}>
+        Add a prefix to all names…
+      </button>
+    )
+  }
+  return (
+    <div className="panel form">
+      <label className="field">
+        <span>Prefix for every exercise name</span>
+        <input
+          className="input"
+          value={prefix}
+          onChange={(e) => setPrefix(e.target.value)}
+          placeholder="e.g. [24S]"
+          autoCapitalize="characters"
+          autoCorrect="off"
+        />
+      </label>
+      {p && (
+        <p className="hint">
+          {without.length} without it · {withIt.length} already have it. Example: {p} {without[0]?.name ?? withIt[0]?.name.slice(p.length).trim() ?? 'Bench press'}
+        </p>
+      )}
+      <div className="grid-2">
+        <button className="btn btn-primary" disabled={!p || !without.length} onClick={add}>
+          Add to all
+        </button>
+        <button className="btn" disabled={!p || !withIt.length} onClick={remove}>
+          Remove from all
+        </button>
+      </div>
+      <button className="btn btn-ghost" onClick={() => setOpen(false)}>
+        Cancel
+      </button>
     </div>
   )
 }

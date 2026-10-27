@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronIcon, CloseIcon } from './Icons'
 
 export type Option = { id: string; label: string; color?: string; sub?: string }
@@ -15,6 +15,7 @@ export function SearchSelect({
   onAdd,
   startOpen = false,
   onClose,
+  floating = false,
 }: {
   options: Option[]
   value?: string | null
@@ -24,10 +25,25 @@ export function SearchSelect({
   onAdd?: (query: string) => void
   startOpen?: boolean
   onClose?: () => void // full-screen use: closing leaves the screen
+  floating?: boolean // keep the control's size; the list floats over the page (tap outside closes)
 }) {
   const [open, setOpen] = useState(startOpen)
   const [query, setQuery] = useState('')
   const selected = options.find((o) => o.id === value)
+  const root = useRef<HTMLDivElement>(null)
+
+  // floating: a tap anywhere outside closes it
+  useEffect(() => {
+    if (!floating || !open) return
+    const outside = (e: PointerEvent) => {
+      if (root.current && !root.current.contains(e.target as Node)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('pointerdown', outside)
+    return () => document.removeEventListener('pointerdown', outside)
+  }, [floating, open])
 
   if (!open) {
     return (
@@ -51,10 +67,10 @@ export function SearchSelect({
   const dismiss = () => (onClose ? onClose() : close())
 
   return (
-    <div className="select-open">
-      <div className="inline">
+    <div ref={root} className={`select-open${floating ? ' floating' : ''}`}>
+      <div className={floating ? 'select-button select-search' : 'inline'}>
         <input
-          className="input grow"
+          className={floating ? 'grow' : 'input grow'}
           type="search"
           placeholder="Search…"
           value={query}
