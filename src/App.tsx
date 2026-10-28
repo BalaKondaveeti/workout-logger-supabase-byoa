@@ -9,7 +9,7 @@ import { clearCache, refresh, resetStore, retryWrites, startStore, useStore } fr
 import { buildIndex } from './lib/derive'
 import { daysSinceLastVisit, restLevel } from './lib/stats'
 import { initSupabase, sb } from './lib/supabase'
-import { ExerciseDetail } from './pages/ExerciseDetail'
+import { EditExercise, ExerciseDetail } from './pages/ExerciseDetail'
 import { Home } from './pages/Home'
 import { AddExercise, NewExercise } from './pages/AddExercise'
 import { MergeExercises } from './pages/MergeExercises'
@@ -166,6 +166,8 @@ function Main({ userId, email, onChangeProject }: { userId: string; email?: stri
           <AddExercise key={hash} date={parts[1]} />
         ) : parts[0] === 'log' ? (
           <LogDay key={parts[1] ?? 'today'} date={parts[1]} focusLog={query.get('log') ?? undefined} />
+        ) : parts[0] === 'exercise' && parts[1] && parts[2] === 'edit' ? (
+          <EditExercise key={parts[1]} id={parts[1]} />
         ) : parts[0] === 'exercise' && parts[1] ? (
           <ExerciseDetail key={parts[1]} id={parts[1]} />
         ) : parts[0] === 'muscle' && parts[1] ? (

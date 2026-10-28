@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MuscleTags, PageHeader, Stat } from '../components/Bits'
 import { Chart } from '../components/Chart'
 import { ExerciseForm } from '../components/ExerciseForm'
+import { PencilIcon } from '../components/Icons'
 import { Feed } from '../components/Feed'
 import { Heatmap } from '../components/Heatmap'
 import { lastMerge, undoMerge } from '../lib/actions'
@@ -15,7 +16,6 @@ import { convert, num } from '../lib/units'
 export function ExerciseDetail({ id }: { id: string }) {
   const ix = useIndex()
   const { displayUnit } = usePrefs()
-  const [editing, setEditing] = useState(false)
   const [merged, setMerged] = useState(() => (lastMerge?.targetId === id ? lastMerge : null))
   const ex = ix.exercise.get(id)
   if (!ex) return <p className="empty">Exercise not found.</p>
@@ -30,18 +30,12 @@ export function ExerciseDetail({ id }: { id: string }) {
       <PageHeader
         back="history"
         title={
-          <input
-            className="title-input"
-            aria-label="Exercise name"
-            value={ex.name}
-            onChange={(e) => updateRow('exercises', id, { name: e.target.value })}
-            onBlur={(e) => !e.target.value.trim() && updateRow('exercises', id, { name: 'Untitled exercise' })}
-          />
-        }
-        right={
-          <button className="btn btn-sm" onClick={() => setEditing(!editing)}>
-            {editing ? 'Close' : 'Edit'}
-          </button>
+          <span className="title-with-edit">
+            <h1>{ex.name}</h1>
+            <a className="icon-btn" href={`#/exercise/${id}/edit`} aria-label={`Edit ${ex.name}`}>
+              <PencilIcon />
+            </a>
+          </span>
         }
       />
       {merged && (
@@ -61,10 +55,7 @@ export function ExerciseDetail({ id }: { id: string }) {
           </button>
         </div>
       )}
-      {editing ? (
-        <ExerciseForm exercise={ex} onDone={() => setEditing(false)} onCancel={() => setEditing(false)} />
-      ) : (
-        <section className="section card card-pad">
+      <section className="section card card-pad">
           {ex.archived && <p className="hint">Hidden from pickers. Unhide it under Menu → Exercises.</p>}
           <MuscleTags exerciseId={id} />
           <label className="field">
@@ -81,7 +72,6 @@ export function ExerciseDetail({ id }: { id: string }) {
             Merge with another exercise…
           </a>
         </section>
-      )}
 
       <section className="section card card-pad">
         <h2>Activity</h2>
@@ -120,6 +110,20 @@ export function ExerciseDetail({ id }: { id: string }) {
         <h2>History</h2>
         <Feed filter={(l) => l.exercise_id === id} />
       </section>
+    </div>
+  )
+}
+
+// Full screen for editing an exercise (name, muscles, machine notes, default unit).
+export function EditExercise({ id }: { id: string }) {
+  const ix = useIndex()
+  const ex = ix.exercise.get(id)
+  const back = `#/exercise/${id}`
+  if (!ex) return <p className="empty">Exercise not found.</p>
+  return (
+    <div className="page">
+      <PageHeader back={back} title={<h1>Edit exercise</h1>} />
+      <ExerciseForm exercise={ex} onDone={() => window.location.replace(back)} onCancel={() => window.location.replace(back)} />
     </div>
   )
 }
