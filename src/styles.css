@@ -1351,6 +1351,81 @@ input[type='time'].input {
   border-bottom: 1px solid var(--border);
 }
 
+/* a set that was just added (or that needs reps) gets a brief tint */
+.set-row.just-added {
+  animation: set-flash 1.4s ease-out;
+}
+
+@keyframes set-flash {
+  0%,
+  35% {
+    background: var(--accent-soft);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.set-row.missing-reps .input.reps:not(:focus) {
+  border-color: var(--danger);
+}
+
+.add-set.done {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.add-set.warn {
+  background: var(--energy-soft);
+  color: var(--energy-ink);
+}
+
+/* bottom sheet (missing reps) */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--backdrop);
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: var(--content-width);
+  padding: var(--space-5) calc(var(--space-4) + env(safe-area-inset-right))
+    calc(var(--space-5) + env(safe-area-inset-bottom)) calc(var(--space-4) + env(safe-area-inset-left));
+  background: var(--card);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: var(--shadow-pop);
+}
+
+.sheet h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.sheet p {
+  margin: 0;
+}
+
+.sheet-list {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  list-style: none;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.sheet-list li {
+  padding: var(--space-1) 0;
+}
+
 .set-main {
   display: flex;
   align-items: center;

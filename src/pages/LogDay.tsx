@@ -3,11 +3,11 @@ import { MuscleTags, PageHeader, Stars } from '../components/Bits'
 import { DownIcon, UpIcon, CloseIcon, ChevronIcon } from '../components/Icons'
 import { SaveStatus } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
-import { addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay, createDayType } from '../lib/actions'
+import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay, createDayType } from '../lib/actions'
 import { byName, lastTime, useIndex } from '../lib/derive'
 import { durationMinutes, hhmm, isISODate, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
 import { setPref, usePrefs } from '../lib/prefs'
-import { getData, updateRow } from '../lib/store'
+import { updateRow } from '../lib/store'
 import type { GymSet, Log } from '../lib/types'
 import { fmtSets } from '../lib/units'
 
@@ -72,11 +72,12 @@ function Switch({ label, checked, onChange }: { label: string; checked: boolean;
   )
 }
 
-function SetRow({ set, n, focus, showSides }: { set: GymSet; n: number; focus: boolean; showSides: boolean }) {
+function SetRow({ set, n, focus, showSides, flash }: { set: GymSet; n: number; focus: boolean; showSides: boolean; flash: boolean }) {
   const [noteOpen, setNoteOpen] = useState(!!set.note)
   const patch = (p: Partial<GymSet>) => updateRow('sets', set.id, p)
+  const missing = set.reps === null && addedSets.has(set.id)
   return (
-    <div className="set-row">
+    <div className={`set-row${flash ? ' just-added' : ''}${missing ? ' missing-reps' : ''}`} data-set={set.id}>
       <div className="set-main">
         <span className="set-n">{n}</span>
         <NumInput label={`Set ${n} weight`} decimal placeholder="Wt" value={set.weight} onChange={(weight) => patch({ weight })} className="weight" />
@@ -139,6 +140,8 @@ function LogEditor({
   const ix = useIndex()
   const { displayUnit, sides } = usePrefs()
   const [focusSet, setFocusSet] = useState<string | null>(null)
+  const [flash, setFlash] = useState<{ id: string; text: string; warn?: boolean } | null>(null)
+  const flashTimer = useRef(0)
   const ex = ix.exercise.get(log.exercise_id)
   const sets = ix.setsOfLog.get(log.id) ?? []
   const prev = lastTime(ix, log.exercise_id, date)
@@ -194,13 +197,31 @@ function LogEditor({
             onChange={(v) => setPref('sides', { ...sides, [log.exercise_id]: v })}
           />
           {sets.map((s, i) => (
-            <SetRow key={s.id} set={s} n={i + 1} focus={s.id === focusSet} showSides={showSides} />
+            <SetRow key={s.id} set={s} n={i + 1} focus={s.id === focusSet} showSides={showSides} flash={flash?.id === s.id} />
           ))}
-          <button type="button" className="btn btn-block btn-big" onClick={() => {
+          <button
+            type="button"
+            className={`btn btn-block btn-big add-set${flash ? (flash.warn ? ' warn' : ' done') : ''}`}
+            onClick={() => {
+              const show = (f: { id: string; text: string; warn?: boolean }) => {
+                setFlash(f)
+                clearTimeout(flashTimer.current)
+                flashTimer.current = window.setTimeout(() => setFlash(null), 1600)
+              }
+              // the last set still has no reps: point at it instead of adding another (stops double taps)
+              const last = sets[sets.length - 1]
+              if (last && last.reps === null) {
+                focusReps(last.id)
+                show({ id: last.id, text: `Add reps to set ${sets.length} first`, warn: true })
+                return
+              }
               const id = addSet(log.id)
-              setFocusSet(getData()!.sets.find((s) => s.id === id)?.reps == null ? id : null)
-            }}>
-            + Add set
+              setFocusSet(id)
+              navigator.vibrate?.(12)
+              show({ id, text: `✓ Set ${sets.length + 1} added` })
+            }}
+          >
+            {flash?.text ?? '+ Add set'}
           </button>
           <div className="field">
             <span>Rating</span>
@@ -233,6 +254,64 @@ function LogEditor({
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function focusReps(setId: string) {
+  const input = document.querySelector<HTMLInputElement>(`[data-set="${setId}"] input.reps`)
+  input?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  input?.focus()
+}
+
+// Sets added on this screen that still have no reps.
+function emptySets(ix: ReturnType<typeof useIndex>, logs: Log[]) {
+  return logs.flatMap((l) =>
+    (ix.setsOfLog.get(l.id) ?? [])
+      .map((s, i) => ({ s, n: i + 1, log: l }))
+      .filter(({ s }) => s.reps === null && addedSets.has(s.id)),
+  )
+}
+
+// Shown when leaving the day while a new set has no reps.
+function MissingRepsSheet({
+  items,
+  onFill,
+  onDelete,
+  onKeep,
+}: {
+  items: { s: GymSet; n: number; log: Log }[]
+  onFill: () => void
+  onDelete: () => void
+  onKeep: () => void
+}) {
+  const ix = useIndex()
+  return (
+    <div className="sheet-backdrop" onClick={onFill}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="missing-reps-title" onClick={(e) => e.stopPropagation()}>
+        <h3 id="missing-reps-title">No reps entered</h3>
+        <p className="muted">
+          {items.length === 1 ? 'This set has' : 'These sets have'} no rep count. Fill {items.length === 1 ? 'it' : 'them'} in,
+          or delete {items.length === 1 ? 'it' : 'them'} if added by mistake?
+        </p>
+        <ul className="sheet-list">
+          {items.map(({ s, n, log }) => (
+            <li key={s.id}>
+              {ix.exercise.get(log.exercise_id)?.name ?? 'Exercise'} · set {n}
+              {s.weight !== null ? ` · ${s.weight}${s.unit}` : ''}
+            </li>
+          ))}
+        </ul>
+        <button type="button" className="btn btn-primary btn-block btn-big" onClick={onFill}>
+          Fill in reps
+        </button>
+        <button type="button" className="btn btn-danger btn-block" onClick={onDelete}>
+          Delete {items.length === 1 ? 'empty set' : `${items.length} empty sets`}
+        </button>
+        <button type="button" className="btn btn-ghost btn-block" onClick={onKeep}>
+          Keep without reps
+        </button>
+      </div>
     </div>
   )
 }
@@ -279,6 +358,29 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
   const day = ix.dayByDate.get(date)
   const logs = day ? (ix.logsOfDay.get(day.id) ?? []) : []
   const [openLogs, setOpenLogs] = useState<Set<string>>(() => new Set(focusLog ? [focusLog] : []))
+  const [leaving, setLeaving] = useState<string | null>(null) // href we were about to go to
+  const empties = emptySets(ix, logs)
+  const emptiesRef = useRef(empties)
+  emptiesRef.current = empties
+
+  // Leaving the day (back, tabs, + Add exercise) with a new set that has no reps: ask first.
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.('a[href^="#"]') as HTMLAnchorElement | null
+      if (!a || !emptiesRef.current.length) return
+      if (a.getAttribute('href') === window.location.hash) return
+      e.preventDefault()
+      e.stopPropagation()
+      setLeaving(a.getAttribute('href'))
+    }
+    document.addEventListener('click', onClick, true)
+    return () => document.removeEventListener('click', onClick, true)
+  }, [])
+
+  const go = (href: string | null) => {
+    setLeaving(null)
+    if (href) window.location.hash = href
+  }
   const dur = durationMinutes(day?.check_in ?? null, day?.check_out ?? null)
 
   const toggle = (id: string) =>
@@ -363,6 +465,26 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
           />
         ))}
       </section>
+
+      {leaving !== null && empties.length > 0 && (
+        <MissingRepsSheet
+          items={empties}
+          onFill={() => {
+            const first = empties[0]
+            setLeaving(null)
+            setOpenLogs((s) => new Set([...s, first.log.id]))
+            window.setTimeout(() => focusReps(first.s.id), 50)
+          }}
+          onDelete={() => {
+            empties.forEach(({ s }) => deleteSet(s.id))
+            go(leaving)
+          }}
+          onKeep={() => {
+            empties.forEach(({ s }) => addedSets.delete(s.id))
+            go(leaving)
+          }}
+        />
+      )}
 
       {day && (
         <button
