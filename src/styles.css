@@ -500,7 +500,18 @@ textarea.input {
   line-height: 1.4;
 }
 
-.input:focus {
+/* Notes boxes (all textareas + set notes): a clear outline so they read as boxes */
+textarea.input,
+.card textarea.input,
+.panel textarea.input,
+.input.note-input {
+  background: var(--note-bg);
+  border: var(--note-border-width) solid var(--note-border);
+}
+
+.input:focus,
+textarea.input:focus,
+.input.note-input:focus {
   border-color: var(--accent);
 }
 

@@ -111,7 +111,7 @@ function SetRow({ set, n, focus, showSides, flash }: { set: GymSet; n: number; f
       </div>
       {noteOpen && (
         <input
-          className="input input-sm"
+          className="input input-sm note-input"
           placeholder="Set note"
           value={set.note ?? ''}
           autoFocus={!set.note}
