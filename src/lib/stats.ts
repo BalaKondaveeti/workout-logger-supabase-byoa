@@ -85,3 +85,15 @@ export function restLevel(since: number | null): RestLevel {
   if (since <= 5) return 'alert'
   return 'overdue'
 }
+
+// Timing of one exercise entry from its sets' times: duration is first → last set,
+// rest is the average time between consecutive sets. Needs at least two timed sets.
+export function setTiming(sets: GymSet[]) {
+  const times = sets
+    .map((s) => (s.done_at ? new Date(s.done_at).getTime() : NaN))
+    .filter((t) => Number.isFinite(t))
+    .sort((a, b) => a - b)
+  if (times.length < 2) return null
+  const durationSec = (times[times.length - 1] - times[0]) / 1000
+  return { durationSec, avgRestSec: durationSec / (times.length - 1), timed: times.length }
+}

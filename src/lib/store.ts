@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 import { loadConfig } from './config'
 import { isUnreachable, UNREACHABLE } from './reach'
 import { sb } from './supabase'
-import { OPTIONAL_TABLES, TABLES, type Data, type Table } from './types'
+import { OPTIONAL_COLUMNS, OPTIONAL_TABLES, TABLES, type Data, type Table } from './types'
 
 // All of the user's gym data lives in memory, mirrored to localStorage per user + project.
 // Cached data shows instantly; it is re-fetched when older than 6 hours, on manual refresh,
@@ -182,17 +182,41 @@ function enqueue(op: Op) {
   run()
 }
 
-async function send(op: Op) {
+// Optional columns the database turned out not to have yet (their SQL not run): left out of writes.
+const missingColumns = new Map<Table, Set<string>>()
+
+function without(table: Table, obj: Record<string, unknown>) {
+  const miss = missingColumns.get(table)
+  if (!miss) return obj
+  return Object.fromEntries(Object.entries(obj).filter(([k]) => !miss.has(k)))
+}
+
+function sendOnce(op: Op) {
   const q = sb().from(TABLES[op.table])
   switch (op.kind) {
     case 'insert':
-      return q.insert(op.row)
-    case 'update':
-      return q.update(op.patch).eq('id', op.id)
+      return q.insert(without(op.table, op.row))
+    case 'update': {
+      const patch = without(op.table, op.patch)
+      if (!Object.keys(patch).length) return Promise.resolve({ error: null, status: 204 } as unknown as Awaited<ReturnType<typeof q.delete>>)
+      return q.update(patch).eq('id', op.id)
+    }
     case 'delete':
       return q.delete().eq('id', op.id)
     case 'upsert':
-      return q.upsert(op.row, { onConflict: op.onConflict })
+      return q.upsert(without(op.table, op.row), { onConflict: op.onConflict })
+  }
+}
+
+async function send(op: Op) {
+  for (;;) {
+    const res = await sendOnce(op)
+    const col = res?.error?.message?.match(/could not find the '([^']+)' column/i)?.[1]
+    if (col && OPTIONAL_COLUMNS[op.table]?.includes(col) && !missingColumns.get(op.table)?.has(col)) {
+      missingColumns.set(op.table, new Set([...(missingColumns.get(op.table) ?? []), col]))
+      continue // retry without it
+    }
+    return res
   }
 }
 

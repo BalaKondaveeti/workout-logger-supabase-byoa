@@ -7,9 +7,9 @@ import { Feed } from '../components/Feed'
 import { Heatmap } from '../components/Heatmap'
 import { lastMerge, undoMerge } from '../lib/actions'
 import { useIndex } from '../lib/derive'
-import { relativeDay, shortDate } from '../lib/dates'
+import { prettySeconds, relativeDay, shortDate } from '../lib/dates'
 import { usePrefs } from '../lib/prefs'
-import { exerciseStats, setsPerDate } from '../lib/stats'
+import { exerciseStats, setsPerDate, setTiming } from '../lib/stats'
 import { updateRow } from '../lib/store'
 import { convert, num } from '../lib/units'
 
@@ -24,6 +24,8 @@ export function ExerciseDetail({ id }: { id: string }) {
   const w = (kg: number) => `${num(convert(kg, 'kg', unit))} ${unit}`
   const st = exerciseStats(ix, id)
   const logs = ix.logsOfExercise.get(id) ?? []
+  const timed = logs.map((l) => setTiming(ix.setsOfLog.get(l.id) ?? [])).filter((t): t is NonNullable<typeof t> => t !== null)
+  const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
 
   return (
     <div className="page">
@@ -84,6 +86,8 @@ export function ExerciseDetail({ id }: { id: string }) {
         <Stat label="Best weight" value={st.pr ? w(st.pr.kg) : '—'} sub={st.pr ? shortDate(st.pr.date) : undefined} />
         <Stat label="Avg rating" value={st.avgRating ? `${st.avgRating.toFixed(1)} ★` : '—'} />
         <Stat label="Est. 1RM best" value={st.best1rm ? w(st.best1rm.kg) : '—'} sub={st.best1rm ? shortDate(st.best1rm.date) : undefined} />
+        <Stat label="Avg duration" value={timed.length ? prettySeconds(avg(timed.map((t) => t.durationSec))) : '—'} sub={timed.length ? `${timed.length} timed` : 'no set times'} />
+        <Stat label="Avg rest" value={timed.length ? prettySeconds(avg(timed.map((t) => t.avgRestSec))) : '—'} sub={timed.length ? 'between sets' : undefined} />
         <Stat label="Est. 1RM latest" value={st.latest1rm ? w(st.latest1rm.kg) : '—'} sub={st.latest1rm ? shortDate(st.latest1rm.date) : undefined} />
       </section>
       <p className="hint">Estimated 1RM uses Epley: weight × (1 + reps / 30).</p>

@@ -46,6 +46,7 @@ export type GymSet = Row & {
   per_arm: boolean
   side: 'left' | 'right' | null
   note: string | null
+  done_at?: string | null // when the set was logged (set on "+ Add set", editable); null for older sets
 }
 
 export type Note = Row & { body: string; updated_at: string }
@@ -76,3 +77,6 @@ export const TABLES: Record<Table, string> = {
 
 // Tables added after launch: until their SQL is run, loading treats them as empty.
 export const OPTIONAL_TABLES: Table[] = ['dayTypes']
+
+// Columns added after launch whose writes are dropped (not failed) until their SQL is run.
+export const OPTIONAL_COLUMNS: Partial<Record<Table, string[]>> = { sets: ['done_at'] }

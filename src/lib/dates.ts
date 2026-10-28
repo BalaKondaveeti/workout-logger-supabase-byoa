@@ -89,3 +89,26 @@ export function weekStart(iso: string) {
   d.setDate(d.getDate() - dow)
   return toISODate(d)
 }
+
+// "45s", "2m 30s", "1h 05m"
+export function prettySeconds(sec: number | null) {
+  if (sec === null || !Number.isFinite(sec)) return ''
+  const s = Math.round(sec)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  if (m < 60) return s % 60 && m < 10 ? `${m}m ${pad(s % 60)}s` : `${Math.round(s / 60)}m`
+  return prettyDuration(Math.round(s / 60))
+}
+
+// local "hh:mm" of an ISO timestamp
+export function timeOf(iso: string) {
+  const d = new Date(iso)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// ISO timestamp for a local date (yyyy-mm-dd) and time (hh:mm)
+export function atLocal(date: string, hhmmValue: string) {
+  const [y, mo, d] = date.split('-').map(Number)
+  const [h, mi] = hhmmValue.split(':').map(Number)
+  return new Date(y, mo - 1, d, h, mi).toISOString()
+}

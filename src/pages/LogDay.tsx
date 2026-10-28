@@ -5,10 +5,11 @@ import { SaveStatus } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
 import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
 import { byName, lastTime, useIndex } from '../lib/derive'
-import { durationMinutes, hhmm, isISODate, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
+import { atLocal, durationMinutes, hhmm, isISODate, prettySeconds, timeOf, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
 import { setPref, usePrefs } from '../lib/prefs'
 import { updateRow } from '../lib/store'
 import type { GymSet, Log } from '../lib/types'
+import { setTiming } from '../lib/stats'
 import { fmtSets } from '../lib/units'
 
 // Number field that keeps what you type ("4." or "") while the stored value is a number.
@@ -72,7 +73,7 @@ function Switch({ label, checked, onChange }: { label: string; checked: boolean;
   )
 }
 
-function SetRow({ set, n, focus, showSides, flash }: { set: GymSet; n: number; focus: boolean; showSides: boolean; flash: boolean }) {
+function SetRow({ set, n, date, focus, showSides, flash }: { set: GymSet; n: number; date: string; focus: boolean; showSides: boolean; flash: boolean }) {
   const [noteOpen, setNoteOpen] = useState(!!set.note)
   const patch = (p: Partial<GymSet>) => updateRow('sets', set.id, p)
   const missing = set.reps === null && addedSets.has(set.id)
@@ -106,6 +107,19 @@ function SetRow({ set, n, focus, showSides, flash }: { set: GymSet; n: number; f
         {!noteOpen && (
           <button type="button" className="link-btn" onClick={() => setNoteOpen(true)}>
             + note
+          </button>
+        )}
+        {set.done_at ? (
+          <input
+            type="time"
+            className="set-time"
+            aria-label={`Set ${n} time`}
+            value={timeOf(set.done_at)}
+            onChange={(e) => e.target.value && patch({ done_at: atLocal(date, e.target.value) })}
+          />
+        ) : (
+          <button type="button" className="link-btn set-time-add" onClick={() => patch({ done_at: atLocal(date, timeOf(new Date().toISOString())) })}>
+            + time
           </button>
         )}
       </div>
@@ -147,6 +161,7 @@ function LogEditor({
   const sets = ix.setsOfLog.get(log.id) ?? []
   const prev = lastTime(ix, log.exercise_id, date)
   const prevSets = prev ? (ix.setsOfLog.get(prev.id) ?? []) : []
+  const timing = setTiming(sets)
   const ref = useRef<HTMLDivElement>(null)
   // Left / Right checkboxes: remembered per exercise, and always on when a set already uses them
   const showSides = sides[log.exercise_id] ?? sets.some((s) => s.side)
@@ -162,7 +177,12 @@ function LogEditor({
       <button type="button" className="log-card-head" onClick={onToggle} aria-expanded={open}>
         <span className="grow">
           <span className="log-card-title">{ex?.name ?? 'Unknown exercise'}</span>
-          {!open && <span className="sets-inline">{sets.length ? fmtSets(sets, displayUnit) : 'No sets yet'}</span>}
+          {!open && (
+            <span className="sets-inline">
+              {sets.length ? fmtSets(sets, displayUnit) : 'No sets yet'}
+              {timing && <span className="muted"> · ⏱ {prettySeconds(timing.durationSec)}</span>}
+            </span>
+          )}
         </span>
         <ChevronIcon />
       </button>
@@ -211,8 +231,14 @@ function LogEditor({
             onChange={(v) => setPref('sides', { ...sides, [log.exercise_id]: v })}
           />
           {sets.map((s, i) => (
-            <SetRow key={s.id} set={s} n={i + 1} focus={s.id === focusSet} showSides={showSides} flash={flash?.id === s.id} />
+            <SetRow key={s.id} set={s} n={i + 1} date={date} focus={s.id === focusSet} showSides={showSides} flash={flash?.id === s.id} />
           ))}
+          {timing && (
+            <p className="set-timing">
+              ⏱ <strong>{prettySeconds(timing.durationSec)}</strong> from first to last set · avg{' '}
+              <strong>{prettySeconds(timing.avgRestSec)}</strong> between sets
+            </p>
+          )}
           <button
             type="button"
             className={`btn btn-block btn-big add-set${flash ? (flash.warn ? ' warn' : ' done') : ''}`}

@@ -1550,6 +1550,37 @@ input[type='time'].input {
   color: var(--muted);
 }
 
+.set-time {
+  margin-left: auto;
+  min-height: 32px;
+  padding: 0 var(--space-1);
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-size: var(--font-size-input); /* ≥16px: no iOS zoom */
+  font-variant-numeric: tabular-nums;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.set-time-add {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.set-timing {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+}
+
+.set-timing strong {
+  color: var(--text);
+}
+
 .set-opts {
   display: flex;
   flex-wrap: wrap;

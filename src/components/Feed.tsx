@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { deleteLog } from '../lib/actions'
 import { useIndex } from '../lib/derive'
-import { durationMinutes, longDate, parseDate, prettyTime } from '../lib/dates'
+import { durationMinutes, longDate, parseDate, prettySeconds, prettyTime } from '../lib/dates'
+import { setTiming } from '../lib/stats'
 import { usePrefs } from '../lib/prefs'
 import type { Day, Log } from '../lib/types'
 import { fmtSet, fmtSets } from '../lib/units'
@@ -78,6 +79,7 @@ export function LogRow({ log, showDate }: { log: Log; showDate?: boolean }) {
   const muscle = ex?.primary_muscle_id ? ix.muscle.get(ex.primary_muscle_id) : undefined
   const sets = ix.setsOfLog.get(log.id) ?? []
   const date = ix.logDate(log)
+  const timing = setTiming(sets)
 
   return (
     <SwipeRow
@@ -100,7 +102,17 @@ export function LogRow({ log, showDate }: { log: Log; showDate?: boolean }) {
             <Stars value={log.rating} />
           </div>
           {showDate && <div className="row-sub">{longDate(date)}</div>}
-          {!open && sets.length > 0 && <div className="sets-inline">{fmtSets(sets, displayUnit)}</div>}
+          {!open && sets.length > 0 && (
+            <div className="sets-inline">
+              {fmtSets(sets, displayUnit)}
+              {timing && (
+                <span className="muted">
+                  {' '}
+                  · ⏱ {prettySeconds(timing.durationSec)}, {prettySeconds(timing.avgRestSec)} rest
+                </span>
+              )}
+            </div>
+          )}
           {!open && log.notes && <div className="row-note">{log.notes}</div>}
           {open && (
             <div className="row-details">

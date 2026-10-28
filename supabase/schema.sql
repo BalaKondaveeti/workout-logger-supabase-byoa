@@ -106,6 +106,7 @@ create index if not exists gym_days_user_date_idx on public.gym_days (user_id, d
 
 -- Soft delete for days: one live (not deleted) day per date; deleted days can share a date.
 alter table public.gym_days add column if not exists deleted_at timestamptz;
+alter table public.gym_sets add column if not exists done_at timestamptz; -- when the set was logged (editable)
 alter table public.gym_days add column if not exists type_id uuid references public.gym_day_types on delete set null;
 create index if not exists gym_day_types_user_idx on public.gym_day_types (user_id);
 create index if not exists gym_days_type_idx on public.gym_days (type_id);
