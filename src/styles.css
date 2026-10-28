@@ -1428,13 +1428,21 @@ input[type='time'].input {
   color: var(--energy-ink);
 }
 
-.add-set.done {
+/* + Add set: outlined in the accent so it stands out on the card (Done below is filled) */
+.btn.add-set {
+  background: var(--card);
+  border: var(--note-border-width) solid var(--accent);
+  color: var(--accent);
+}
+
+.btn.add-set.done {
   background: var(--accent-soft);
   color: var(--accent-ink);
 }
 
-.add-set.warn {
+.btn.add-set.warn {
   background: var(--energy-soft);
+  border-color: var(--energy);
   color: var(--energy-ink);
 }
 
