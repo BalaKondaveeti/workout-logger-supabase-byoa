@@ -1,5 +1,6 @@
 import { PageHeader, Stat } from '../components/Bits'
 import { Feed } from '../components/Feed'
+import { Heatmap } from '../components/Heatmap'
 import { Freshness } from '../components/SaveStatus'
 import { useIndex } from '../lib/derive'
 import { restLevel } from '../lib/stats'
@@ -18,6 +19,10 @@ export function Home() {
   return (
     <div className="page">
       <PageHeader title={<h1 className="large-title">Gym</h1>} right={<Freshness />} />
+      <section className="section card card-pad">
+        <h2>Activity</h2>
+        <Heatmap values={ix.setsPerDate} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
+      </section>
       <section className="stats stats-3 stats-compact">
         <Stat
           label="Last visit"
