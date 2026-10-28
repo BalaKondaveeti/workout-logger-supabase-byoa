@@ -4,6 +4,9 @@ type Row = { id: string; user_id?: string; created_at?: string }
 
 export type Muscle = Row & { name: string; color: string; archived: boolean }
 
+// A day's split / workout type (Push, Pull, Legs, Arms…): the user's own list.
+export type DayType = Row & { name: string; color: string; archived: boolean }
+
 export type Exercise = Row & {
   name: string
   primary_muscle_id: string | null
@@ -22,6 +25,7 @@ export type Day = Row & {
   pre_workout_note: string | null
   rating: number | null
   notes: string | null
+  type_id?: string | null // DayType (split); missing before the column exists
   deleted_at?: string | null // set = in Recently deleted (soft delete); missing before the column exists
 }
 
@@ -54,6 +58,7 @@ export type Data = {
   logs: Log[]
   sets: GymSet[]
   notes: Note[]
+  dayTypes: DayType[]
 }
 
 export type Table = keyof Data
@@ -66,4 +71,8 @@ export const TABLES: Record<Table, string> = {
   logs: 'gym_logs',
   sets: 'gym_sets',
   notes: 'gym_notes',
+  dayTypes: 'gym_day_types',
 }
+
+// Tables added after launch: until their SQL is run, loading treats them as empty.
+export const OPTIONAL_TABLES: Table[] = ['dayTypes']

@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 import { loadConfig } from './config'
 import { isUnreachable, UNREACHABLE } from './reach'
 import { sb } from './supabase'
-import { TABLES, type Data, type Table } from './types'
+import { OPTIONAL_TABLES, TABLES, type Data, type Table } from './types'
 
 // All of the user's gym data lives in memory, mirrored to localStorage per user + project.
 // Cached data shows instantly; it is re-fetched when older than 6 hours, on manual refresh,
@@ -86,7 +86,11 @@ async function fetchTable(table: Table) {
       .select('*')
       .order('id')
       .range(from, from + PAGE - 1)
-    if (error) throw Object.assign(new Error(error.message), { status })
+    if (error) {
+      // a newer table whose SQL hasn't been run yet: load as empty instead of failing everything
+      if (OPTIONAL_TABLES.includes(table) && /could not find the table|does not exist/i.test(error.message)) return []
+      throw Object.assign(new Error(error.message), { status })
+    }
     rows.push(...data)
     if (data.length < PAGE) return rows
   }
@@ -117,11 +121,18 @@ export async function refresh() {
   }
 }
 
+// Caches written before a table existed lack its key.
+function withDefaults(d: Data): Data {
+  const out = { ...d }
+  for (const t of Object.keys(TABLES) as Table[]) if (!Array.isArray(out[t])) (out as Record<Table, unknown[]>)[t] = []
+  return out
+}
+
 export function startStore(uid: string) {
   userId = uid
   const cached = readCache()
   set({
-    data: cached?.data ?? null,
+    data: cached?.data ? withDefaults(cached.data) : null,
     fetchedAt: cached?.at ?? 0,
     stale: !cached || !!cached.stale || Date.now() - cached.at > MAX_AGE_MS,
     error: '',

@@ -1198,8 +1198,43 @@ input[type='time'].input {
 
 /* ---------- Log screen ---------- */
 
-.head-action {
-  margin-top: var(--space-3);
+/* Day screen: "+ Add exercise" pinned just above the tab bar */
+.bottom-action {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  z-index: 9;
+  padding: var(--space-3) calc(var(--space-4) + env(safe-area-inset-right)) var(--space-3)
+    calc(var(--space-4) + env(safe-area-inset-left));
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--border);
+}
+
+.bottom-action > .btn {
+  display: flex;
+  max-width: calc(var(--content-width) - 2 * var(--space-4));
+  margin: 0 auto;
+}
+
+.page.has-bottom-action {
+  padding-bottom: calc(var(--tap-lg) + var(--space-5));
+}
+
+.split-picker {
+  align-items: flex-start;
+}
+
+.chip-type {
+  gap: var(--space-1);
+  color: var(--text);
+}
+
+.chip-type .dot {
+  width: var(--space-2);
+  height: var(--space-2);
 }
 
 .times-grid {

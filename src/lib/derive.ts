@@ -1,11 +1,12 @@
 import { useStore } from './store'
-import type { Data, Day, Exercise, GymSet, Log, Muscle } from './types'
+import type { Data, Day, DayType, Exercise, GymSet, Log, Muscle } from './types'
 
 // Lookup tables built once per data snapshot.
 export type Index = {
   data: Data // live data only: deleted days and their logs/sets are left out
   trash: TrashedDay[] // Recently deleted, newest deletion first
   muscle: Map<string, Muscle>
+  dayType: Map<string, DayType>
   exercise: Map<string, Exercise>
   secondaryOf: Map<string, string[]> // exercise id -> muscle ids
   day: Map<string, Day>
@@ -85,6 +86,7 @@ export function buildIndex(raw: Data): Index {
     data,
     trash,
     muscle: new Map(data.muscles.map((m) => [m.id, m])),
+    dayType: new Map((data.dayTypes ?? []).map((t) => [t.id, t])),
     exercise: new Map(data.exercises.map((e) => [e.id, e])),
     secondaryOf: new Map([...group(data.secondary, (s) => s.exercise_id)].map(([k, v]) => [k, v.map((s) => s.muscle_id)])),
     day,

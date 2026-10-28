@@ -13,6 +13,16 @@ create table if not exists public.gym_muscles (
   archived boolean not null default false
 );
 
+-- Day splits / workout types (Push, Pull, Legs, Arms…): the user's own list.
+create table if not exists public.gym_day_types (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users on delete cascade,
+  created_at timestamptz not null default now(),
+  name text not null,
+  color text not null default '#888888',
+  archived boolean not null default false
+);
+
 create table if not exists public.gym_exercises (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users on delete cascade,
@@ -96,6 +106,9 @@ create index if not exists gym_days_user_date_idx on public.gym_days (user_id, d
 
 -- Soft delete for days: one live (not deleted) day per date; deleted days can share a date.
 alter table public.gym_days add column if not exists deleted_at timestamptz;
+alter table public.gym_days add column if not exists type_id uuid references public.gym_day_types on delete set null;
+create index if not exists gym_day_types_user_idx on public.gym_day_types (user_id);
+create index if not exists gym_days_type_idx on public.gym_days (type_id);
 alter table public.gym_days drop constraint if exists gym_days_user_id_date_key;
 create unique index if not exists gym_days_user_date_live_key on public.gym_days (user_id, date) where deleted_at is null;
 create index if not exists gym_logs_user_idx on public.gym_logs (user_id);
@@ -111,7 +124,7 @@ declare
   t text;
 begin
   foreach t in array array[
-    'gym_muscles', 'gym_exercises', 'gym_exercise_secondary_muscles',
+    'gym_muscles', 'gym_day_types', 'gym_exercises', 'gym_exercise_secondary_muscles',
     'gym_days', 'gym_logs', 'gym_sets', 'gym_notes'
   ] loop
     execute format('alter table public.%I enable row level security', t);

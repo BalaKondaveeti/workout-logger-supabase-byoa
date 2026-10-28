@@ -3,7 +3,7 @@ import { PageHeader } from '../components/Bits'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { DateBadge, DayMeta, dayTimes, weekday } from '../components/Feed'
 import { RightIcon } from '../components/Icons'
-import { createMuscle, deleteDayForever, nextMuscleColor, restoreDay } from '../lib/actions'
+import { createDayType, createMuscle, deleteDayForever, nextMuscleColor, restoreDay } from '../lib/actions'
 import { loadConfig } from '../lib/config'
 import { byName, useIndex, type TrashedDay } from '../lib/derive'
 import { longDate, relativeDay, toISODate } from '../lib/dates'
@@ -16,6 +16,7 @@ type Props = { path: string; email?: string; onSignOut: () => void; onChangeProj
 export function Menu({ path, email, onSignOut, onChangeProject }: Props) {
   if (path === 'exercises') return <Exercises />
   if (path === 'muscles') return <Muscles />
+  if (path === 'splits') return <Splits />
   if (path === 'notes') return <Notes />
   if (path === 'units') return <Units />
   if (path === 'deleted') return <RecentlyDeleted />
@@ -51,6 +52,7 @@ function MenuHome({ email, onSignOut }: { email?: string; onSignOut: () => void 
         <div className="menu-group">
           <Item href="#/menu/exercises" label="Exercises" detail={String(ix.data.exercises.filter((e) => !e.archived).length)} />
           <Item href="#/menu/muscles" label="Muscles" detail={String(ix.data.muscles.filter((m) => !m.archived).length)} />
+          <Item href="#/menu/splits" label="Splits" detail={String(ix.data.dayTypes.filter((t) => !t.archived).length)} />
         </div>
       </section>
       <section className="section">
@@ -264,6 +266,71 @@ function PrefixTool() {
       <button className="btn btn-ghost" onClick={() => setOpen(false)}>
         Cancel
       </button>
+    </div>
+  )
+}
+
+// Day splits (Push, Pull, Legs, Arms…): add, rename, recolor, hide. Same pattern as Muscles.
+function Splits() {
+  const ix = useIndex()
+  const [name, setName] = useState('')
+  const [showHidden, setShowHidden] = useState(false)
+  const list = ix.data.dayTypes.filter((t) => showHidden || !t.archived).sort(byName)
+  const hiddenCount = ix.data.dayTypes.filter((t) => t.archived).length
+  const used = new Map<string, number>()
+  for (const d of ix.data.days) if (d.type_id) used.set(d.type_id, (used.get(d.type_id) ?? 0) + 1)
+  const add = () => {
+    const n = name.trim()
+    if (!n || ix.data.dayTypes.some((t) => t.name.toLowerCase() === n.toLowerCase())) return setName('')
+    createDayType(n)
+    setName('')
+  }
+
+  return (
+    <div className="page">
+      <PageHeader back="#/menu" title={<h1>Splits</h1>} />
+      <p className="hint">Tag each gym day with one of these on the day screen.</p>
+      <div className="inline">
+        <input
+          className="input grow"
+          placeholder="New split, e.g. Push"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && add()}
+        />
+        <button className="btn btn-primary" onClick={add} disabled={!name.trim()}>
+          Add
+        </button>
+      </div>
+      {list.length === 0 && <p className="empty">No splits yet.</p>}
+      <div className="list">
+        {list.map((t) => (
+          <div key={t.id} className={`manage-row${t.archived ? ' archived' : ''}`}>
+            <input
+              type="color"
+              className="input input-color"
+              aria-label={`${t.name} color`}
+              value={t.color}
+              onChange={(e) => updateRow('dayTypes', t.id, { color: e.target.value })}
+            />
+            <input
+              className="input grow"
+              aria-label="Split name"
+              value={t.name}
+              onChange={(e) => updateRow('dayTypes', t.id, { name: e.target.value })}
+            />
+            <span className="muted small">{used.get(t.id) ?? 0} day{used.get(t.id) === 1 ? "" : "s"}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => updateRow('dayTypes', t.id, { archived: !t.archived }, true)}>
+              {t.archived ? 'Unhide' : 'Hide'}
+            </button>
+          </div>
+        ))}
+      </div>
+      {hiddenCount > 0 && (
+        <button className="btn btn-ghost" onClick={() => setShowHidden(!showHidden)}>
+          {showHidden ? 'Hide hidden' : `Show hidden (${hiddenCount})`}
+        </button>
+      )}
     </div>
   )
 }

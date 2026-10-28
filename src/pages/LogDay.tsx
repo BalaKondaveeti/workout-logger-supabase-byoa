@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { MuscleTags, PageHeader, Stars } from '../components/Bits'
 import { DownIcon, UpIcon, CloseIcon, ChevronIcon } from '../components/Icons'
 import { SaveStatus } from '../components/SaveStatus'
-import { addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
-import { lastTime, useIndex } from '../lib/derive'
+import { SearchSelect } from '../components/SearchSelect'
+import { addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay, createDayType } from '../lib/actions'
+import { byName, lastTime, useIndex } from '../lib/derive'
 import { durationMinutes, hhmm, isISODate, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
 import { setPref, usePrefs } from '../lib/prefs'
 import { getData, updateRow } from '../lib/store'
@@ -179,10 +180,10 @@ function LogEditor({
           <div className="last-time">
             <span className="muted small">Last time</span>
             {prev ? (
-              <a href={`#/log/${ix.logDate(prev)}`}>
+              <span>
                 {shortDate(ix.logDate(prev))} · {fmtSets(prevSets, displayUnit, ', ') || 'no sets'}
                 {prev.rating ? <> · <Stars value={prev.rating} /></> : null}
-              </a>
+              </span>
             ) : (
               <span className="muted">First time</span>
             )}
@@ -236,6 +237,42 @@ function LogEditor({
   )
 }
 
+// The day's split (Push, Pull, Legs…), picked from the user's own list; "+ Add new" adds to it.
+function SplitPicker({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
+  const ix = useIndex()
+  const options = ix.data.dayTypes
+    .filter((t) => !t.archived || t.id === value)
+    .sort(byName)
+    .map((t) => ({ id: t.id, label: t.name, color: t.color }))
+  return (
+    <div className="field">
+      <span>Split</span>
+      <div className="inline split-picker">
+        <div className="grow">
+          <SearchSelect
+            options={options}
+            value={value}
+            placeholder="Push, pull, legs…"
+            onPick={onChange}
+            addLabel="Add new split"
+            onAdd={(q) => {
+              const name = q || window.prompt('New split name (e.g. Push, Pull, Legs, Arms)')?.trim()
+              if (!name) return
+              const existing = ix.data.dayTypes.find((t) => t.name.toLowerCase() === name.toLowerCase())
+              onChange(existing?.id ?? createDayType(name))
+            }}
+          />
+        </div>
+        {value && (
+          <button type="button" className="icon-btn" aria-label="Clear split" onClick={() => onChange(null)}>
+            <CloseIcon />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?: string }) {
   const date = routeDate && isISODate(routeDate) ? routeDate : today()
   const ix = useIndex()
@@ -253,12 +290,13 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
     })
 
   return (
-    <div className="page">
-      <PageHeader back="#/" title={date === today() ? 'Today' : longDate(date)} right={<SaveStatus />}>
-        <a className="btn btn-primary btn-block btn-big head-action" href={`#/log/${date}/add`}>
+    <div className="page has-bottom-action">
+      <PageHeader back="#/" title={date === today() ? 'Today' : longDate(date)} right={<SaveStatus />} />
+      <div className="bottom-action">
+        <a className="btn btn-primary btn-block btn-big" href={`#/log/${date}/add`}>
           + Add exercise
         </a>
-      </PageHeader>
+      </div>
 
       <section className="section card card-pad">
         <label className="field">
@@ -290,6 +328,7 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
           ))}
         </div>
         {dur !== null && <p className="hint">Duration {prettyDuration(dur)}</p>}
+        <SplitPicker value={day?.type_id ?? null} onChange={(type_id) => updateDay(date, { type_id })} />
         <label className="check check-lg">
           <input type="checkbox" checked={!!day?.pre_workout} onChange={(e) => updateDay(date, { pre_workout: e.target.checked })} />
           Pre-workout ⚡
@@ -311,7 +350,7 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
 
       <section className="section">
         <h2>Exercises</h2>
-        {logs.length === 0 && <p className="hint">Nothing logged for this day yet. Tap “+ Add exercise” above.</p>}
+        {logs.length === 0 && <p className="hint">Nothing logged for this day yet. Tap “+ Add exercise” below.</p>}
         {logs.map((l, i) => (
           <LogEditor
             key={l.id}

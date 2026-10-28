@@ -1,6 +1,6 @@
 import { buildIndex, lastTime } from './derive'
 import { deleteRow, getData, insertRow, updateRow, uuid } from './store'
-import type { Day, Exercise, GymSet, Log, Muscle, Unit } from './types'
+import type { Day, DayType, Exercise, GymSet, Log, Muscle, Unit } from './types'
 
 // Higher-level writes used by the screens. All go through the store's queue.
 
@@ -156,6 +156,14 @@ export const MUSCLE_COLORS = [
   '#e4572e', '#2e86de', '#3fa7d6', '#1b4f72', '#f39c12', '#8e44ad', '#c0399b',
   '#7f8c8d', '#27ae60', '#16a085', '#d35400', '#6ab04c', '#f1c40f', '#e17055',
 ]
+
+export function createDayType(name: string): string {
+  const used = new Set(getData()!.dayTypes.map((t) => t.color.toLowerCase()))
+  const color = MUSCLE_COLORS.find((c) => !used.has(c)) ?? MUSCLE_COLORS[getData()!.dayTypes.length % MUSCLE_COLORS.length]
+  const t: DayType = { id: uuid(), name: name.trim(), color, archived: false }
+  insertRow('dayTypes', t)
+  return t.id
+}
 
 export function nextMuscleColor() {
   const used = new Set(getData()!.muscles.map((m) => m.color.toLowerCase()))
