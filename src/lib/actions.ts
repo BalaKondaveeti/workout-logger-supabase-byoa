@@ -175,3 +175,70 @@ export function nextMuscleColor() {
   const used = new Set(getData()!.muscles.map((m) => m.color.toLowerCase()))
   return MUSCLE_COLORS.find((c) => !used.has(c)) ?? MUSCLE_COLORS[getData()!.muscles.length % MUSCLE_COLORS.length]
 }
+
+// ---------- merging exercises ----------
+// Moves every log of `sourceId` (deleted days included) to `targetId`, gives the target the
+// chosen name, appends the source's machine notes, adds the source's muscles the target lacks,
+// and hides the source (never deleted). The last merge can be undone while the app stays open.
+
+export type MergeRecord = {
+  sourceId: string
+  targetId: string
+  sourceName: string
+  logIds: string[]
+  prevTarget: Pick<Exercise, 'name' | 'notes' | 'primary_muscle_id'>
+  sourceWasArchived: boolean
+  addedSecondary: string[] // secondary-muscle row ids created on the target
+}
+
+export let lastMerge: MergeRecord | null = null
+
+export function mergeExercises(sourceId: string, targetId: string, name: string): MergeRecord {
+  const data = getData()!
+  const source = data.exercises.find((e) => e.id === sourceId)!
+  const target = data.exercises.find((e) => e.id === targetId)!
+  const logIds = data.logs.filter((l) => l.exercise_id === sourceId).map((l) => l.id)
+  for (const id of logIds) updateRow('logs', id, { exercise_id: targetId }, true)
+
+  const patch: Partial<Exercise> = {}
+  if (name.trim() && name.trim() !== target.name) patch.name = name.trim()
+  const srcNotes = source.notes?.trim()
+  if (srcNotes && !(target.notes ?? '').includes(srcNotes)) {
+    patch.notes = target.notes?.trim() ? `${target.notes.trim()}\n\n${source.name}: ${srcNotes}` : srcNotes
+  }
+  if (!target.primary_muscle_id && source.primary_muscle_id) patch.primary_muscle_id = source.primary_muscle_id
+  if (Object.keys(patch).length) updateRow('exercises', targetId, patch, true)
+
+  const primary = patch.primary_muscle_id ?? target.primary_muscle_id
+  const have = new Set(data.secondary.filter((s) => s.exercise_id === targetId).map((s) => s.muscle_id))
+  const wanted = [source.primary_muscle_id, ...data.secondary.filter((s) => s.exercise_id === sourceId).map((s) => s.muscle_id)]
+  const addedSecondary: string[] = []
+  for (const m of wanted) {
+    if (!m || m === primary || have.has(m)) continue
+    have.add(m)
+    const id = uuid()
+    insertRow('secondary', { id, exercise_id: targetId, muscle_id: m })
+    addedSecondary.push(id)
+  }
+
+  if (!source.archived) updateRow('exercises', sourceId, { archived: true }, true)
+
+  lastMerge = {
+    sourceId,
+    targetId,
+    sourceName: source.name,
+    logIds,
+    prevTarget: { name: target.name, notes: target.notes, primary_muscle_id: target.primary_muscle_id },
+    sourceWasArchived: source.archived,
+    addedSecondary,
+  }
+  return lastMerge
+}
+
+export function undoMerge(m: MergeRecord) {
+  for (const id of m.logIds) updateRow('logs', id, { exercise_id: m.sourceId }, true)
+  updateRow('exercises', m.targetId, m.prevTarget, true)
+  for (const id of m.addedSecondary) deleteRow('secondary', id)
+  updateRow('exercises', m.sourceId, { archived: m.sourceWasArchived }, true)
+  if (lastMerge === m) lastMerge = null
+}

@@ -1370,6 +1370,25 @@ input[type='time'].input {
   border-color: var(--danger);
 }
 
+.merge-swap {
+  display: flex;
+  justify-content: center;
+}
+
+.merge-preview p {
+  margin: 0;
+}
+
+.merge-done {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  color: var(--accent-ink);
+}
+
 .btn-done {
   background: var(--accent-soft);
   color: var(--accent-ink);

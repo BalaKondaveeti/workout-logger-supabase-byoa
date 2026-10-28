@@ -12,6 +12,7 @@ import { initSupabase, sb } from './lib/supabase'
 import { ExerciseDetail } from './pages/ExerciseDetail'
 import { Home } from './pages/Home'
 import { AddExercise, NewExercise } from './pages/AddExercise'
+import { MergeExercises } from './pages/MergeExercises'
 import { LogDay } from './pages/LogDay'
 import { Menu } from './pages/Menu'
 import { MuscleDetail } from './pages/MuscleDetail'
@@ -155,7 +156,9 @@ function Main({ userId, email, onChangeProject }: { userId: string; email?: stri
             <ErrorNotice error={writeError || error} onRetry={writeError ? retryWrites : refresh} />
           </div>
         )}
-        {parts[0] === 'log' && parts[2] === 'new' ? (
+        {parts[0] === 'merge' ? (
+          <MergeExercises key={hash} from={query.get('from') ?? undefined} />
+        ) : parts[0] === 'log' && parts[2] === 'new' ? (
           <NewExercise key={hash} date={parts[1]} name={query.get('name') ?? ''} />
         ) : parts[0] === 'menu' && parts[1] === 'exercises' && parts[2] === 'new' ? (
           <NewExercise key={hash} done="#/menu/exercises" cancel="#/menu/exercises" />

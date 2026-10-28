@@ -171,9 +171,14 @@ function Exercises() {
   return (
     <div className="page">
       <PageHeader back="#/menu" title={<h1>Exercises</h1>} />
-      <a className="btn btn-primary btn-block" href="#/menu/exercises/new">
-        + Add exercise
-      </a>
+      <div className="grid-2">
+        <a className="btn btn-primary" href="#/menu/exercises/new">
+          + Add exercise
+        </a>
+        <a className="btn" href="#/merge">
+          Merge two…
+        </a>
+      </div>
       <div className="list">
         {list.map((e) => {
           const m = e.primary_muscle_id ? ix.muscle.get(e.primary_muscle_id) : undefined

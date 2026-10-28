@@ -4,6 +4,7 @@ import { Chart } from '../components/Chart'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { Feed } from '../components/Feed'
 import { Heatmap } from '../components/Heatmap'
+import { lastMerge, undoMerge } from '../lib/actions'
 import { useIndex } from '../lib/derive'
 import { relativeDay, shortDate } from '../lib/dates'
 import { usePrefs } from '../lib/prefs'
@@ -15,6 +16,7 @@ export function ExerciseDetail({ id }: { id: string }) {
   const ix = useIndex()
   const { displayUnit } = usePrefs()
   const [editing, setEditing] = useState(false)
+  const [merged, setMerged] = useState(() => (lastMerge?.targetId === id ? lastMerge : null))
   const ex = ix.exercise.get(id)
   if (!ex) return <p className="empty">Exercise not found.</p>
 
@@ -42,6 +44,23 @@ export function ExerciseDetail({ id }: { id: string }) {
           </button>
         }
       />
+      {merged && (
+        <div className="merge-done">
+          <span className="grow">
+            Merged <strong>{merged.sourceName}</strong> in ({merged.logIds.length} entr{merged.logIds.length === 1 ? 'y' : 'ies'}).
+          </span>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => {
+              undoMerge(merged)
+              setMerged(null)
+            }}
+          >
+            Undo
+          </button>
+        </div>
+      )}
       {editing ? (
         <ExerciseForm exercise={ex} onDone={() => setEditing(false)} onCancel={() => setEditing(false)} />
       ) : (
@@ -58,6 +77,9 @@ export function ExerciseDetail({ id }: { id: string }) {
               onChange={(e) => updateRow('exercises', id, { notes: e.target.value || null })}
             />
           </label>
+          <a className="link-btn small" href={`#/merge?from=${id}`}>
+            Merge with another exercise…
+          </a>
         </section>
       )}
 
