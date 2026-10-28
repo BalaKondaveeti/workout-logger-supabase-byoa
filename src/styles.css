@@ -1370,6 +1370,16 @@ input[type='time'].input {
   border-color: var(--danger);
 }
 
+.btn-done {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.btn-done.warn {
+  background: var(--energy-soft);
+  color: var(--energy-ink);
+}
+
 .add-set.done {
   background: var(--accent-soft);
   color: var(--accent-ink);

@@ -142,6 +142,7 @@ function LogEditor({
   const [focusSet, setFocusSet] = useState<string | null>(null)
   const [flash, setFlash] = useState<{ id: string; text: string; warn?: boolean } | null>(null)
   const flashTimer = useRef(0)
+  const [doneWarn, setDoneWarn] = useState('')
   const ex = ix.exercise.get(log.exercise_id)
   const sets = ix.setsOfLog.get(log.id) ?? []
   const prev = lastTime(ix, log.exercise_id, date)
@@ -252,6 +253,25 @@ function LogEditor({
               Remove exercise
             </button>
           </div>
+          <button
+            type="button"
+            className={`btn btn-block btn-big btn-done${doneWarn ? ' warn' : ''}`}
+            onClick={() => {
+              const empty = sets.findIndex((s) => s.reps === null && addedSets.has(s.id))
+              if (empty >= 0 && !doneWarn) {
+                // first tap: point at the set that still needs reps; a second tap closes anyway
+                focusReps(sets[empty].id)
+                setDoneWarn(`Set ${empty + 1} has no reps · tap again to close`)
+                window.setTimeout(() => setDoneWarn(''), 2500)
+                return
+              }
+              setDoneWarn('')
+              onToggle()
+              window.setTimeout(() => ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 0)
+            }}
+          >
+            {doneWarn || 'Done'}
+          </button>
         </div>
       )}
     </div>
