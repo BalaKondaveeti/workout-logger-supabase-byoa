@@ -306,6 +306,13 @@ function cascadeDelete(d: Data, table: Table, id: string): Data {
       sets: d.sets.filter((s) => !logIds.has(s.log_id)),
     }
   }
+  if (table === 'dayTypes') {
+    return {
+      ...d,
+      dayTypes: d.dayTypes.filter((t) => t.id !== id),
+      days: d.days.map((day) => (day.type_id === id ? { ...day, type_id: null } : day)),
+    }
+  }
   if (table === 'logs') return { ...d, logs: d.logs.filter((l) => l.id !== id), sets: d.sets.filter((s) => s.log_id !== id) }
   return { ...d, [table]: (d[table] as { id: string }[]).filter((r) => r.id !== id) }
 }

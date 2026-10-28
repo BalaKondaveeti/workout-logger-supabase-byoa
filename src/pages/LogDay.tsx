@@ -3,7 +3,7 @@ import { MuscleTags, PageHeader, Stars } from '../components/Bits'
 import { DownIcon, UpIcon, CloseIcon, ChevronIcon } from '../components/Icons'
 import { SaveStatus } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
-import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay, createDayType } from '../lib/actions'
+import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
 import { byName, lastTime, useIndex } from '../lib/derive'
 import { durationMinutes, hhmm, isISODate, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
 import { setPref, usePrefs } from '../lib/prefs'
@@ -336,7 +336,8 @@ function MissingRepsSheet({
   )
 }
 
-// The day's split (Push, Pull, Legs…), picked from the user's own list; "+ Add new" adds to it.
+// The day's split (Push, Pull, Legs…), picked from the user's own list. New splits are only
+// added in Menu → Splits (never created from here).
 function SplitPicker({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
   const ix = useIndex()
   const options = ix.data.dayTypes
@@ -351,15 +352,8 @@ function SplitPicker({ value, onChange }: { value: string | null; onChange: (id:
           <SearchSelect
             options={options}
             value={value}
-            placeholder="Push, pull, legs…"
+            placeholder={options.length ? 'Choose a split' : 'No splits yet'}
             onPick={onChange}
-            addLabel="Add new split"
-            onAdd={(q) => {
-              const name = q || window.prompt('New split name (e.g. Push, Pull, Legs, Arms)')?.trim()
-              if (!name) return
-              const existing = ix.data.dayTypes.find((t) => t.name.toLowerCase() === name.toLowerCase())
-              onChange(existing?.id ?? createDayType(name))
-            }}
           />
         </div>
         {value && (
@@ -368,6 +362,9 @@ function SplitPicker({ value, onChange }: { value: string | null; onChange: (id:
           </button>
         )}
       </div>
+      <a className="link-btn small split-manage" href="#/menu/splits">
+        {options.length ? 'Edit splits' : 'Add splits in Menu → Splits'}
+      </a>
     </div>
   )
 }

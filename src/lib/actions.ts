@@ -171,6 +171,9 @@ export function createDayType(name: string): string {
   return t.id
 }
 
+// Permanently removes a split; days tagged with it are left without a split.
+export const deleteDayType = (id: string) => deleteRow('dayTypes', id)
+
 export function nextMuscleColor() {
   const used = new Set(getData()!.muscles.map((m) => m.color.toLowerCase()))
   return MUSCLE_COLORS.find((c) => !used.has(c)) ?? MUSCLE_COLORS[getData()!.muscles.length % MUSCLE_COLORS.length]

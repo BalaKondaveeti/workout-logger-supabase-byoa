@@ -1256,6 +1256,14 @@ input[type='time'].input {
   align-items: flex-start;
 }
 
+.split-manage {
+  align-self: flex-start;
+}
+
+.icon-btn.danger-icon {
+  color: var(--danger);
+}
+
 .chip-type {
   gap: var(--space-1);
   color: var(--text);

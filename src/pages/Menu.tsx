@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { PageHeader } from '../components/Bits'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { DateBadge, DayMeta, dayTimes, weekday } from '../components/Feed'
-import { RightIcon } from '../components/Icons'
-import { createDayType, createMuscle, deleteDayForever, nextMuscleColor, restoreDay } from '../lib/actions'
+import { RightIcon, TrashIcon } from '../components/Icons'
+import { createDayType, createMuscle, deleteDayForever, deleteDayType, nextMuscleColor, restoreDay } from '../lib/actions'
 import { loadConfig } from '../lib/config'
 import { byName, useIndex, type TrashedDay } from '../lib/derive'
 import { longDate, relativeDay, toISODate } from '../lib/dates'
@@ -327,6 +327,19 @@ function Splits() {
             <span className="muted small">{used.get(t.id) ?? 0} day{used.get(t.id) === 1 ? "" : "s"}</span>
             <button className="btn btn-sm btn-ghost" onClick={() => updateRow('dayTypes', t.id, { archived: !t.archived }, true)}>
               {t.archived ? 'Unhide' : 'Hide'}
+            </button>
+            <button
+              className="icon-btn danger-icon"
+              aria-label={`Delete ${t.name}`}
+              onClick={() => {
+                const n = used.get(t.id) ?? 0
+                const msg = n
+                  ? `Delete "${t.name}"? ${n} day${n === 1 ? '' : 's'} tagged with it will have no split. This can't be undone.`
+                  : `Delete "${t.name}"?`
+                if (confirm(msg)) deleteDayType(t.id)
+              }}
+            >
+              <TrashIcon />
             </button>
           </div>
         ))}
