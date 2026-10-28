@@ -168,6 +168,19 @@ function LogEditor({
       </button>
       {open && (
         <div className="log-card-body">
+          <div className="field">
+            <span>Rating</span>
+            <Stars value={log.rating} onChange={(rating) => updateRow('logs', log.id, { rating })} />
+          </div>
+          <label className="field">
+            <span>Notes</span>
+            <textarea
+              className="input"
+              rows={2}
+              value={log.notes ?? ''}
+              onChange={(e) => updateRow('logs', log.id, { notes: e.target.value || null })}
+            />
+          </label>
           <MuscleTags exerciseId={log.exercise_id} />
           {ex && (
             <label className="field">
@@ -224,19 +237,6 @@ function LogEditor({
           >
             {flash?.text ?? '+ Add set'}
           </button>
-          <div className="field">
-            <span>Rating</span>
-            <Stars value={log.rating} onChange={(rating) => updateRow('logs', log.id, { rating })} />
-          </div>
-          <label className="field">
-            <span>Notes</span>
-            <textarea
-              className="input"
-              rows={2}
-              value={log.notes ?? ''}
-              onChange={(e) => updateRow('logs', log.id, { notes: e.target.value || null })}
-            />
-          </label>
           <div className="inline log-card-foot">
             <button type="button" className="icon-btn" aria-label="Move up" disabled={isFirst} onClick={() => moveLog(log.id, -1)}>
               <UpIcon />
