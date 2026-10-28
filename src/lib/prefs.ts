@@ -6,10 +6,11 @@ import type { Unit } from './types'
 export type DisplayUnit = Unit | 'logged'
 
 // sides: exercise id -> show the Left / Right checkboxes on its sets
-type Prefs = { displayUnit: DisplayUnit; sides: Record<string, boolean> }
+export type StatsRange = '4w' | '12w' | 'all'
+type Prefs = { displayUnit: DisplayUnit; sides: Record<string, boolean>; statsRange: StatsRange }
 
 const KEY = 'gym.prefs'
-const DEFAULTS: Prefs = { displayUnit: 'logged', sides: {} }
+const DEFAULTS: Prefs = { displayUnit: 'logged', sides: {}, statsRange: '12w' }
 const listeners = new Set<() => void>()
 
 let prefs: Prefs = (() => {

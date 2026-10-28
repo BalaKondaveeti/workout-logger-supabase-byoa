@@ -1628,6 +1628,33 @@ input[type='time'].input {
   color: var(--alert-ink);
 }
 
+.stats-compact .stat {
+  padding: var(--space-2) var(--space-3);
+  gap: 0;
+}
+
+.stats-compact .stat-value {
+  font-size: var(--font-size-stat-sm);
+}
+
+.stats-compact .stat-sub {
+  font-size: var(--font-size-xs);
+}
+
+.stat-row {
+  gap: var(--space-2);
+}
+
+.stat-row-num {
+  flex: none;
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-splits {
+  padding: 0;
+}
+
 .stat-sub {
   font-size: var(--font-size-sm);
   color: var(--muted);

@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
 import { ErrorNotice } from './components/ErrorNotice'
-import { BarbellIcon, MenuIcon, PlusIcon } from './components/Icons'
+import { BarbellIcon, MenuIcon, PlusIcon, StatsIcon } from './components/Icons'
 import { Login } from './components/Login'
 import { Setup } from './components/Setup'
 import { today } from './lib/dates'
@@ -11,6 +11,7 @@ import { daysSinceLastVisit, restLevel } from './lib/stats'
 import { initSupabase, sb } from './lib/supabase'
 import { EditExercise, ExerciseDetail } from './pages/ExerciseDetail'
 import { Home } from './pages/Home'
+import { Stats } from './pages/Stats'
 import { AddExercise, NewExercise } from './pages/AddExercise'
 import { MergeExercises } from './pages/MergeExercises'
 import { LogDay } from './pages/LogDay'
@@ -20,6 +21,7 @@ import { MuscleDetail } from './pages/MuscleDetail'
 const TABS = [
   { section: 'home', href: '#/', label: 'Home', icon: <BarbellIcon />, showLabel: true },
   { section: 'log', href: '#/log', label: 'Log', icon: <PlusIcon />, showLabel: true },
+  { section: 'stats', href: '#/stats', label: 'Stats', icon: <StatsIcon />, showLabel: true },
   { section: 'menu', href: '#/menu', label: 'Menu', icon: <MenuIcon />, showLabel: false },
 ]
 
@@ -133,7 +135,7 @@ function Main({ userId, email, onChangeProject }: { userId: string; email?: stri
   }
 
   const { parts, query } = parseRoute(hash)
-  const section = parts[0] === 'menu' ? 'menu' : parts[0] === 'log' ? 'log' : 'home'
+  const section = parts[0] === 'menu' ? 'menu' : parts[0] === 'log' ? 'log' : parts[0] === 'stats' ? 'stats' : 'home'
 
   return (
     <>
@@ -156,7 +158,9 @@ function Main({ userId, email, onChangeProject }: { userId: string; email?: stri
             <ErrorNotice error={writeError || error} onRetry={writeError ? retryWrites : refresh} />
           </div>
         )}
-        {parts[0] === 'merge' ? (
+        {parts[0] === 'stats' ? (
+          <Stats />
+        ) : parts[0] === 'merge' ? (
           <MergeExercises key={hash} from={query.get('from') ?? undefined} />
         ) : parts[0] === 'log' && parts[2] === 'new' ? (
           <NewExercise key={hash} date={parts[1]} name={query.get('name') ?? ''} />

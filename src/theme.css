@@ -18,6 +18,7 @@
   --font-size-title: 32px; /* large page titles */
   --font-size-num: 20px; /* set inputs */
   --font-size-stat: 30px;
+  --font-size-stat-sm: 22px; /* compact tiles on Home */
   --font-size-star: 28px;
   --font-size-axis: 10px; /* chart axis labels (SVG units) */
   --font-weight: 400;

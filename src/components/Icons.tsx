@@ -20,6 +20,14 @@ export function BarbellIcon() {
   )
 }
 
+export function StatsIcon() {
+  return (
+    <svg {...base}>
+      <path d="M4 20h16M7 16v-5M12 16V6M17 16v-8" />
+    </svg>
+  )
+}
+
 export function PlusIcon() {
   return (
     <svg {...base}>
