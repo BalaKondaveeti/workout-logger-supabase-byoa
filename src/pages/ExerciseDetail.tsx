@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MuscleTags, PageHeader, Stat } from '../components/Bits'
+import { AutoTextarea, MuscleTags, PageHeader, Stat } from '../components/Bits'
 import { Chart } from '../components/Chart'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { PencilIcon } from '../components/Icons'
@@ -62,7 +62,7 @@ export function ExerciseDetail({ id }: { id: string }) {
           <MuscleTags exerciseId={id} />
           <label className="field">
             <span>Machine notes</span>
-            <textarea
+            <AutoTextarea
               className="input"
               rows={2}
               placeholder="Seat height, pin position, cues…"

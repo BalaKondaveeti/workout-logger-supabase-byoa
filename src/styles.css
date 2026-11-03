@@ -497,6 +497,11 @@ textarea {
   background: var(--input);
 }
 
+textarea.input.auto-grow {
+  resize: none;
+  overflow: hidden;
+}
+
 textarea.input {
   resize: vertical;
   line-height: 1.4;

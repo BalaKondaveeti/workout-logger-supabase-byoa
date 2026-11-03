@@ -1,3 +1,4 @@
+import { AutoTextarea } from './Bits'
 import { useState, type FormEvent } from 'react'
 import { createExercise, createMuscle, nextMuscleColor, setSecondary } from '../lib/actions'
 import { byName, useIndex } from '../lib/derive'
@@ -152,7 +153,7 @@ export function ExerciseForm({
       </div>
       <label className="field">
         <span>Machine notes</span>
-        <textarea
+        <AutoTextarea
           className="input"
           rows={2}
           placeholder="Seat height, pin position, cues…"

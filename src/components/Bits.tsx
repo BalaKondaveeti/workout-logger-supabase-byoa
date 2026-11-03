@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode, type TextareaHTMLAttributes } from 'react'
 import { useIndex } from '../lib/derive'
 import type { Muscle } from '../lib/types'
 import { BackIcon } from './Icons'
@@ -133,4 +133,21 @@ export function Stat({
       {sub && <span className="stat-sub">{sub}</span>}
     </div>
   )
+}
+
+// A textarea that grows to show its whole text (no inner scrolling), at least `rows` tall.
+export function AutoTextarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  const fit = () => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight + (el.offsetHeight - el.clientHeight)}px`
+  }
+  useLayoutEffect(fit, [props.value])
+  useLayoutEffect(() => {
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  }, [])
+  return <textarea {...props} ref={ref} className={`${props.className ?? ''} auto-grow`} />
 }

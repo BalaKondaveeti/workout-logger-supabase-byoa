@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { MuscleTags, PageHeader, Stars } from '../components/Bits'
+import { AutoTextarea, MuscleTags, PageHeader, Stars } from '../components/Bits'
 import { DownIcon, UpIcon, CloseIcon, RightIcon } from '../components/Icons'
 import { SaveStatus } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
@@ -211,9 +211,21 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
       </p>
 
       <section className="section card card-pad">
+        {ex && (
+          <label className="field">
+            <span>Machine notes</span>
+            <AutoTextarea
+              className="input"
+              rows={2}
+              placeholder="Seat height, pin position, cues…"
+              value={ex.notes ?? ''}
+              onChange={(e) => updateRow('exercises', ex.id, { notes: e.target.value || null })}
+            />
+          </label>
+        )}
         <label className="field">
           <span>Notes</span>
-          <textarea
+          <AutoTextarea
             className="input"
             rows={2}
             value={log.notes ?? ''}
@@ -221,18 +233,6 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
           />
         </label>
         <MuscleTags exerciseId={log.exercise_id} />
-        {ex && (
-          <label className="field">
-            <span>Machine notes</span>
-            <textarea
-              className="input"
-              rows={1}
-              placeholder="Seat height, pin position, cues…"
-              value={ex.notes ?? ''}
-              onChange={(e) => updateRow('exercises', ex.id, { notes: e.target.value || null })}
-            />
-          </label>
-        )}
         <div className="last-time">
           <span className="muted small">Last time</span>
           {prev ? (
@@ -521,7 +521,7 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
         </div>
         <label className="field">
           <span>Notes for the day</span>
-          <textarea
+          <AutoTextarea
             className="input"
             rows={2}
             value={day?.notes ?? ''}
