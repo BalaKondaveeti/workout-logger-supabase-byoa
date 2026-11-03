@@ -1250,6 +1250,67 @@ input[type='time'].input {
   margin: 0 auto;
 }
 
+/* Exercise screen: rating + Done pinned above the tab bar */
+.bottom-rate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.bottom-rate > * {
+  width: 100%;
+  max-width: calc(var(--content-width) - 2 * var(--space-4));
+  margin: 0 auto;
+}
+
+.rate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.rate-row.unrated {
+  color: var(--energy-ink);
+}
+
+.page.has-bottom-rate {
+  padding-bottom: calc(var(--tap-lg) + var(--tap) + var(--space-6));
+}
+
+.ex-screen-date {
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.ex-screen-foot {
+  padding: 0 var(--space-1);
+}
+
+.log-link {
+  gap: var(--space-3);
+  color: inherit;
+  text-decoration: none;
+}
+
+.log-link .muscle-bar {
+  align-self: stretch;
+}
+
+.log-link .stars-static,
+.log-link .muted.small {
+  display: block;
+  margin-top: 2px;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .page.has-bottom-action {
   padding-bottom: calc(var(--tap-lg) + var(--space-5));
 }

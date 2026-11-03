@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { MuscleTags, PageHeader, Stars } from '../components/Bits'
-import { DownIcon, UpIcon, CloseIcon, ChevronIcon } from '../components/Icons'
+import { DownIcon, UpIcon, CloseIcon, RightIcon } from '../components/Icons'
 import { SaveStatus } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
 import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
 import { byName, lastTime, useIndex } from '../lib/derive'
 import { atLocal, durationMinutes, hhmm, isISODate, prettySeconds, timeOf, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
+import { closeExercise, exerciseHref, markOpenedInApp, openExercise } from '../lib/nav'
 import { setPref, usePrefs } from '../lib/prefs'
 import { updateRow } from '../lib/store'
 import type { GymSet, Log } from '../lib/types'
@@ -136,171 +137,233 @@ function SetRow({ set, n, date, focus, showSides, flash }: { set: GymSet; n: num
   )
 }
 
-function LogEditor({
-  log,
-  date,
-  open,
-  onToggle,
-  isFirst,
-  isLast,
-}: {
-  log: Log
-  date: string
-  open: boolean
-  onToggle: () => void
-  isFirst: boolean
-  isLast: boolean
-}) {
+// Full screen for one exercise of a day: notes, last time, sets. Rating and Done are pinned at
+// the bottom so the rating is always in view.
+export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logId: string }) {
+  const date = routeDate && isISODate(routeDate) ? routeDate : today()
   const ix = useIndex()
   const { displayUnit, sides } = usePrefs()
   const [focusSet, setFocusSet] = useState<string | null>(null)
   const [flash, setFlash] = useState<{ id: string; text: string; warn?: boolean } | null>(null)
   const flashTimer = useRef(0)
-  const [doneWarn, setDoneWarn] = useState('')
+  const [leaving, setLeaving] = useState<string | null>(null) // where we were going when the reps sheet opened
+  const dayHref = `#/log/${date}`
+
+  const log = ix.data.logs.find((l) => l.id === logId)
+  const sets = log ? (ix.setsOfLog.get(log.id) ?? []) : []
+  const empties = log ? emptySets(ix, [log]) : []
+  const emptiesRef = useRef(empties)
+  emptiesRef.current = empties
+
+  // Leaving (back arrow, tabs, any link) with a new set that has no reps: ask first.
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.('a[href^="#"]') as HTMLAnchorElement | null
+      if (!a || !emptiesRef.current.length) return
+      if (a.getAttribute('href') === window.location.hash) return
+      e.preventDefault()
+      e.stopPropagation()
+      setLeaving(a.getAttribute('href'))
+    }
+    document.addEventListener('click', onClick, true)
+    return () => document.removeEventListener('click', onClick, true)
+  }, [])
+
+  const go = (href: string | null) => {
+    setLeaving(null)
+    if (!href || href === dayHref) closeExercise(date)
+    else window.location.hash = href
+  }
+  const done = () => (empties.length ? setLeaving(dayHref) : closeExercise(date))
+
+  if (!log) {
+    return (
+      <div className="page">
+        <PageHeader back={dayHref} title={<h1>Exercise</h1>} />
+        <p className="empty">This exercise isn’t on this day any more.</p>
+        <a className="btn btn-block" href={dayHref}>
+          Back to the day
+        </a>
+      </div>
+    )
+  }
+
   const ex = ix.exercise.get(log.exercise_id)
-  const sets = ix.setsOfLog.get(log.id) ?? []
   const prev = lastTime(ix, log.exercise_id, date)
   const prevSets = prev ? (ix.setsOfLog.get(prev.id) ?? []) : []
   const timing = setTiming(sets)
-  const ref = useRef<HTMLDivElement>(null)
+  const dayLogs = ix.logsOfDay.get(log.day_id) ?? []
+  const pos = dayLogs.findIndex((l) => l.id === log.id)
   // Left / Right checkboxes: remembered per exercise, and always on when a set already uses them
   const showSides = sides[log.exercise_id] ?? sets.some((s) => s.side)
 
-  useEffect(() => {
-    if (open && new URLSearchParams(window.location.hash.split('?')[1]).get('log') === log.id) {
-      ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
-    }
-  }, [open, log.id])
-
   return (
-    <div className={`log-card${open ? ' open' : ''}`} ref={ref}>
-      <button type="button" className="log-card-head" onClick={onToggle} aria-expanded={open}>
-        <span className="grow">
-          <span className="log-card-title">{ex?.name ?? 'Unknown exercise'}</span>
-          {!open && (
-            <span className="sets-inline">
-              {sets.length ? fmtSets(sets, displayUnit) : 'No sets yet'}
-              {timing && <span className="muted"> · ⏱ {prettySeconds(timing.durationSec)}</span>}
-            </span>
-          )}
-        </span>
-        <ChevronIcon />
-      </button>
-      {open && (
-        <div className="log-card-body">
-          <div className="field">
-            <span>Rating</span>
-            <Stars value={log.rating} onChange={(rating) => updateRow('logs', log.id, { rating })} />
-          </div>
+    <div className="page has-bottom-rate">
+      <PageHeader
+        back={dayHref}
+        onBack={() => go(dayHref)}
+        title={<h1 className="ellipsis">{ex?.name ?? 'Unknown exercise'}</h1>}
+        right={<SaveStatus />}
+      />
+      <p className="hint ex-screen-date">
+        {date === today() ? 'Today' : longDate(date)}
+        {dayLogs.length > 1 ? ` · exercise ${pos + 1} of ${dayLogs.length}` : ''}
+      </p>
+
+      <section className="section card card-pad">
+        <label className="field">
+          <span>Notes</span>
+          <textarea
+            className="input"
+            rows={2}
+            value={log.notes ?? ''}
+            onChange={(e) => updateRow('logs', log.id, { notes: e.target.value || null })}
+          />
+        </label>
+        <MuscleTags exerciseId={log.exercise_id} />
+        {ex && (
           <label className="field">
-            <span>Notes</span>
+            <span>Machine notes</span>
             <textarea
               className="input"
-              rows={2}
-              value={log.notes ?? ''}
-              onChange={(e) => updateRow('logs', log.id, { notes: e.target.value || null })}
+              rows={1}
+              placeholder="Seat height, pin position, cues…"
+              value={ex.notes ?? ''}
+              onChange={(e) => updateRow('exercises', ex.id, { notes: e.target.value || null })}
             />
           </label>
-          <MuscleTags exerciseId={log.exercise_id} />
-          {ex && (
-            <label className="field">
-              <span>Machine notes</span>
-              <textarea
-                className="input"
-                rows={1}
-                placeholder="Seat height, pin position, cues…"
-                value={ex.notes ?? ''}
-                onChange={(e) => updateRow('exercises', ex.id, { notes: e.target.value || null })}
-              />
-            </label>
+        )}
+        <div className="last-time">
+          <span className="muted small">Last time</span>
+          {prev ? (
+            <span>
+              {shortDate(ix.logDate(prev))} · {fmtSets(prevSets, displayUnit, ', ') || 'no sets'}
+              {prev.rating ? <> · <Stars value={prev.rating} /></> : null}
+            </span>
+          ) : (
+            <span className="muted">First time</span>
           )}
-          <div className="last-time">
-            <span className="muted small">Last time</span>
-            {prev ? (
-              <span>
-                {shortDate(ix.logDate(prev))} · {fmtSets(prevSets, displayUnit, ', ') || 'no sets'}
-                {prev.rating ? <> · <Stars value={prev.rating} /></> : null}
-              </span>
-            ) : (
-              <span className="muted">First time</span>
-            )}
-          </div>
+        </div>
+      </section>
+
+      <section className="section card card-pad">
+        <div className="inline">
+          <h2 className="grow">Sets</h2>
           <Switch
             label="Left / right"
             checked={showSides}
             onChange={(v) => setPref('sides', { ...sides, [log.exercise_id]: v })}
           />
-          {sets.map((s, i) => (
-            <SetRow key={s.id} set={s} n={i + 1} date={date} focus={s.id === focusSet} showSides={showSides} flash={flash?.id === s.id} />
-          ))}
-          {timing && (
-            <p className="set-timing">
-              ⏱ <strong>{prettySeconds(timing.durationSec)}</strong> from first to last set · avg{' '}
-              <strong>{prettySeconds(timing.avgRestSec)}</strong> between sets
-            </p>
-          )}
-          <button
-            type="button"
-            className={`btn btn-block btn-big add-set${flash ? (flash.warn ? ' warn' : ' done') : ''}`}
-            onClick={() => {
-              const show = (f: { id: string; text: string; warn?: boolean }) => {
-                setFlash(f)
-                clearTimeout(flashTimer.current)
-                flashTimer.current = window.setTimeout(() => setFlash(null), 1600)
-              }
-              // the last set still has no reps: point at it instead of adding another (stops double taps)
-              const last = sets[sets.length - 1]
-              if (last && last.reps === null) {
-                focusReps(last.id)
-                show({ id: last.id, text: `Add reps to set ${sets.length} first`, warn: true })
-                return
-              }
-              const id = addSet(log.id)
-              setFocusSet(id)
-              navigator.vibrate?.(12)
-              show({ id, text: `✓ Set ${sets.length + 1} added` })
-            }}
-          >
-            {flash?.text ?? '+ Add set'}
-          </button>
-          <div className="inline log-card-foot">
-            <button type="button" className="icon-btn" aria-label="Move up" disabled={isFirst} onClick={() => moveLog(log.id, -1)}>
-              <UpIcon />
-            </button>
-            <button type="button" className="icon-btn" aria-label="Move down" disabled={isLast} onClick={() => moveLog(log.id, 1)}>
-              <DownIcon />
-            </button>
-            <span className="grow" />
-            <button
-              type="button"
-              className="btn btn-danger btn-sm"
-              onClick={() => confirm(`Remove ${ex?.name ?? 'this exercise'} and its ${sets.length} sets from this day?`) && deleteLog(log.id)}
-            >
-              Remove exercise
-            </button>
-          </div>
-          <button
-            type="button"
-            className={`btn btn-block btn-big btn-done${doneWarn ? ' warn' : ''}`}
-            onClick={() => {
-              const empty = sets.findIndex((s) => s.reps === null && addedSets.has(s.id))
-              if (empty >= 0 && !doneWarn) {
-                // first tap: point at the set that still needs reps; a second tap closes anyway
-                focusReps(sets[empty].id)
-                setDoneWarn(`Set ${empty + 1} has no reps · tap again to close`)
-                window.setTimeout(() => setDoneWarn(''), 2500)
-                return
-              }
-              setDoneWarn('')
-              onToggle()
-              window.setTimeout(() => ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 0)
-            }}
-          >
-            {doneWarn || 'Done'}
-          </button>
         </div>
+        {sets.length === 0 && <p className="hint">No sets yet.</p>}
+        {sets.map((s, i) => (
+          <SetRow key={s.id} set={s} n={i + 1} date={date} focus={s.id === focusSet} showSides={showSides} flash={flash?.id === s.id} />
+        ))}
+        {timing && (
+          <p className="set-timing">
+            ⏱ <strong>{prettySeconds(timing.durationSec)}</strong> from first to last set · avg{' '}
+            <strong>{prettySeconds(timing.avgRestSec)}</strong> between sets
+          </p>
+        )}
+        <button
+          type="button"
+          className={`btn btn-block btn-big add-set${flash ? (flash.warn ? ' warn' : ' done') : ''}`}
+          onClick={() => {
+            const show = (f: { id: string; text: string; warn?: boolean }) => {
+              setFlash(f)
+              clearTimeout(flashTimer.current)
+              flashTimer.current = window.setTimeout(() => setFlash(null), 1600)
+            }
+            // the last set still has no reps: point at it instead of adding another (stops double taps)
+            const last = sets[sets.length - 1]
+            if (last && last.reps === null) {
+              focusReps(last.id)
+              show({ id: last.id, text: `Add reps to set ${sets.length} first`, warn: true })
+              return
+            }
+            const id = addSet(log.id)
+            setFocusSet(id)
+            navigator.vibrate?.(12)
+            show({ id, text: `✓ Set ${sets.length + 1} added` })
+          }}
+        >
+          {flash?.text ?? '+ Add set'}
+        </button>
+      </section>
+
+      <div className="inline ex-screen-foot">
+        <button type="button" className="btn btn-sm btn-ghost" disabled={pos <= 0} onClick={() => moveLog(log.id, -1)}>
+          <UpIcon /> Earlier
+        </button>
+        <button type="button" className="btn btn-sm btn-ghost" disabled={pos < 0 || pos >= dayLogs.length - 1} onClick={() => moveLog(log.id, 1)}>
+          <DownIcon /> Later
+        </button>
+        <span className="grow" />
+        <button
+          type="button"
+          className="btn btn-danger btn-sm"
+          onClick={() => {
+            if (!confirm(`Remove ${ex?.name ?? 'this exercise'} and its ${sets.length} sets from this day?`)) return
+            closeExercise(date)
+            deleteLog(log.id)
+          }}
+        >
+          Remove exercise
+        </button>
+      </div>
+
+      <div className="bottom-action bottom-rate">
+        <div className={`rate-row${log.rating ? '' : ' unrated'}`}>
+          <span className="small">{log.rating ? 'Rating' : 'Rate this exercise'}</span>
+          <Stars value={log.rating} onChange={(rating) => updateRow('logs', log.id, { rating }, true)} />
+        </div>
+        <button type="button" className="btn btn-primary btn-block btn-big" onClick={done}>
+          Done
+        </button>
+      </div>
+
+      {leaving !== null && empties.length > 0 && (
+        <MissingRepsSheet
+          items={empties}
+          onFill={() => {
+            setLeaving(null)
+            window.setTimeout(() => focusReps(empties[0].s.id), 50)
+          }}
+          onDelete={() => {
+            empties.forEach(({ s }) => deleteSet(s.id))
+            go(leaving)
+          }}
+          onKeep={() => {
+            empties.forEach(({ s }) => addedSets.delete(s.id))
+            go(leaving)
+          }}
+        />
       )}
     </div>
+  )
+}
+
+// One exercise on the day screen: a plain row that opens its own screen (nothing expands here).
+function ExerciseLink({ log, date }: { log: Log; date: string }) {
+  const ix = useIndex()
+  const { displayUnit } = usePrefs()
+  const ex = ix.exercise.get(log.exercise_id)
+  const muscle = ex?.primary_muscle_id ? ix.muscle.get(ex.primary_muscle_id) : undefined
+  const sets = ix.setsOfLog.get(log.id) ?? []
+  const timing = setTiming(sets)
+  return (
+    <a className="log-card log-card-head log-link" href={exerciseHref(date, log.id)} onClick={markOpenedInApp}>
+      <span className="muscle-bar" style={{ background: muscle?.color }} aria-hidden />
+      <span className="grow">
+        <span className="log-card-title">{ex?.name ?? 'Unknown exercise'}</span>
+        <span className="sets-inline">
+          {sets.length ? fmtSets(sets, displayUnit) : 'No sets yet'}
+          {timing && <span className="muted"> · ⏱ {prettySeconds(timing.durationSec)}</span>}
+        </span>
+        {log.rating ? <Stars value={log.rating} /> : <span className="muted small">Not rated</span>}
+      </span>
+      <RightIcon />
+    </a>
   )
 }
 
@@ -400,39 +463,13 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
   const ix = useIndex()
   const day = ix.dayByDate.get(date)
   const logs = day ? (ix.logsOfDay.get(day.id) ?? []) : []
-  const [openLogs, setOpenLogs] = useState<Set<string>>(() => new Set(focusLog ? [focusLog] : []))
-  const [leaving, setLeaving] = useState<string | null>(null) // href we were about to go to
-  const empties = emptySets(ix, logs)
-  const emptiesRef = useRef(empties)
-  emptiesRef.current = empties
 
-  // Leaving the day (back, tabs, + Add exercise) with a new set that has no reps: ask first.
+  // old links (#/log/<date>?log=<id>) open that exercise's screen
   useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      const a = (e.target as Element | null)?.closest?.('a[href^="#"]') as HTMLAnchorElement | null
-      if (!a || !emptiesRef.current.length) return
-      if (a.getAttribute('href') === window.location.hash) return
-      e.preventDefault()
-      e.stopPropagation()
-      setLeaving(a.getAttribute('href'))
-    }
-    document.addEventListener('click', onClick, true)
-    return () => document.removeEventListener('click', onClick, true)
-  }, [])
+    if (focusLog && logs.some((l) => l.id === focusLog)) openExercise(date, focusLog, true)
+  }, [focusLog])
 
-  const go = (href: string | null) => {
-    setLeaving(null)
-    if (href) window.location.hash = href
-  }
   const dur = durationMinutes(day?.check_in ?? null, day?.check_out ?? null)
-
-  const toggle = (id: string) =>
-    setOpenLogs((s) => {
-      const next = new Set(s)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
 
   return (
     <div className="page has-bottom-action">
@@ -496,38 +533,10 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
       <section className="section">
         <h2>Exercises</h2>
         {logs.length === 0 && <p className="hint">Nothing logged for this day yet. Tap “+ Add exercise” below.</p>}
-        {logs.map((l, i) => (
-          <LogEditor
-            key={l.id}
-            log={l}
-            date={date}
-            open={openLogs.has(l.id)}
-            onToggle={() => toggle(l.id)}
-            isFirst={i === 0}
-            isLast={i === logs.length - 1}
-          />
+        {logs.map((l) => (
+          <ExerciseLink key={l.id} log={l} date={date} />
         ))}
       </section>
-
-      {leaving !== null && empties.length > 0 && (
-        <MissingRepsSheet
-          items={empties}
-          onFill={() => {
-            const first = empties[0]
-            setLeaving(null)
-            setOpenLogs((s) => new Set([...s, first.log.id]))
-            window.setTimeout(() => focusReps(first.s.id), 50)
-          }}
-          onDelete={() => {
-            empties.forEach(({ s }) => deleteSet(s.id))
-            go(leaving)
-          }}
-          onKeep={() => {
-            empties.forEach(({ s }) => addedSets.delete(s.id))
-            go(leaving)
-          }}
-        />
-      )}
 
       {day && (
         <button

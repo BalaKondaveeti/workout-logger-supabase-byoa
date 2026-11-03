@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { deleteLog } from '../lib/actions'
 import { useIndex } from '../lib/derive'
 import { durationMinutes, longDate, parseDate, prettySeconds, prettyTime } from '../lib/dates'
+import { openExercise } from '../lib/nav'
 import { setTiming } from '../lib/stats'
 import { usePrefs } from '../lib/prefs'
 import type { Day, Log } from '../lib/types'
@@ -85,7 +86,7 @@ export function LogRow({ log, showDate }: { log: Log; showDate?: boolean }) {
     <SwipeRow
       onTap={() => setOpen(!open)}
       actions={[
-        { label: 'Edit', icon: <PencilIcon />, onClick: () => (window.location.hash = `#/log/${date}?log=${log.id}`) },
+        { label: 'Edit', icon: <PencilIcon />, onClick: () => openExercise(date, log.id) },
         {
           label: 'Delete',
           icon: <TrashIcon />,

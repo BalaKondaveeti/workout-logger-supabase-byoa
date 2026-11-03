@@ -4,7 +4,19 @@ import type { Muscle } from '../lib/types'
 import { BackIcon } from './Icons'
 
 // Pinned page header. `back` is a hash to go to (or history back when 'history').
-export function PageHeader({ title, back, right, children }: { title: ReactNode; back?: string; right?: ReactNode; children?: ReactNode }) {
+export function PageHeader({
+  title,
+  back,
+  onBack,
+  right,
+  children,
+}: {
+  title: ReactNode
+  back?: string
+  onBack?: () => void // custom back (the link still has `back` as its href)
+  right?: ReactNode
+  children?: ReactNode
+}) {
   return (
     <header className="sticky-head">
       <div className="page-head">
@@ -14,6 +26,11 @@ export function PageHeader({ title, back, right, children }: { title: ReactNode;
             href={back === 'history' ? '#/' : back}
             aria-label="Back"
             onClick={(e) => {
+              if (onBack) {
+                e.preventDefault()
+                onBack()
+                return
+              }
               if (back === 'history' && window.history.length > 1) {
                 e.preventDefault()
                 window.history.back()

@@ -1,6 +1,7 @@
 import { PageHeader } from '../components/Bits'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { addLog } from '../lib/actions'
+import { openExercise } from '../lib/nav'
 import { byName, useIndex } from '../lib/derive'
 import { isISODate, longDate, shortDate, today } from '../lib/dates'
 import { SearchSelect } from '../components/SearchSelect'
@@ -11,7 +12,7 @@ export function AddExercise({ date: routeDate }: { date?: string }) {
   const date = routeDate && isISODate(routeDate) ? routeDate : today()
   const ix = useIndex()
   const back = `#/log/${date}`
-  const add = (exerciseId: string) => window.location.replace(`${back}?log=${addLog(date, exerciseId)}`)
+  const add = (exerciseId: string) => openExercise(date, addLog(date, exerciseId), true)
 
   const options = ix.data.exercises
     .filter((e) => !e.archived)
@@ -43,7 +44,7 @@ export function NewExercise({ date: routeDate, name = '', done, cancel }: { date
   const date = routeDate && isISODate(routeDate) ? routeDate : today()
   const back = cancel ?? `#/log/${date}/add`
   const onDone = (exerciseId: string) =>
-    window.location.replace(done ?? `#/log/${date}?log=${addLog(date, exerciseId)}`)
+    done ? window.location.replace(done) : openExercise(date, addLog(date, exerciseId), true)
   return (
     <div className="page">
       <PageHeader
