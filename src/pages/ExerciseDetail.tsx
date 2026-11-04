@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import { AutoTextarea, MuscleTags, PageHeader, Stat } from '../components/Bits'
+import { AutoTextarea, MuscleTags, PageHeader, Stars, Stat } from '../components/Bits'
+import { SearchSelect } from '../components/SearchSelect'
 import { Chart } from '../components/Chart'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { PencilIcon } from '../components/Icons'
 import { Feed } from '../components/Feed'
 import { Heatmap } from '../components/Heatmap'
 import { lastMerge, undoMerge } from '../lib/actions'
-import { useIndex } from '../lib/derive'
-import { prettySeconds, relativeDay, shortDate } from '../lib/dates'
+import { byName, useIndex } from '../lib/derive'
+import { longDate, prettySeconds, relativeDay, shortDate } from '../lib/dates'
 import { usePrefs } from '../lib/prefs'
 import { exerciseStats, setsPerDate, setTiming } from '../lib/stats'
 import { updateRow } from '../lib/store'
-import { convert, num } from '../lib/units'
+import { convert, fmtSets, num } from '../lib/units'
 
 export function ExerciseDetail({ id }: { id: string }) {
   const ix = useIndex()
@@ -110,11 +111,133 @@ export function ExerciseDetail({ id }: { id: string }) {
         </section>
       )}
 
-      <section className="section">
-        <h2>History</h2>
-        <Feed filter={(l) => l.exercise_id === id} />
-      </section>
+      <History id={id} />
     </div>
+  )
+}
+
+// History of one exercise. "Select" lets you tick entries and move them to another exercise.
+function History({ id }: { id: string }) {
+  const ix = useIndex()
+  const { displayUnit } = usePrefs()
+  const [selecting, setSelecting] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [picking, setPicking] = useState(false)
+  const [moved, setMoved] = useState<{ ids: string[]; to: string } | null>(null)
+  const logs = ix.logsOfExercise.get(id) ?? []
+  const ex = ix.exercise.get(id)
+
+  const toggle = (logId: string) =>
+    setSelected((s) => {
+      const next = new Set(s)
+      if (next.has(logId)) next.delete(logId)
+      else next.add(logId)
+      return next
+    })
+  const stop = () => {
+    setSelecting(false)
+    setSelected(new Set())
+    setPicking(false)
+  }
+  const options = ix.data.exercises
+    .filter((e) => !e.archived && e.id !== id)
+    .sort(byName)
+    .map((e) => {
+      const m = e.primary_muscle_id ? ix.muscle.get(e.primary_muscle_id) : undefined
+      const last = ix.logsOfExercise.get(e.id)?.[0]
+      return { id: e.id, label: e.name, color: m?.color, sub: last ? shortDate(ix.logDate(last)) : m?.name }
+    })
+  const moveTo = (to: string) => {
+    const ids = [...selected]
+    const name = ix.exercise.get(to)?.name
+    if (!confirm(`Move ${ids.length} entr${ids.length === 1 ? 'y' : 'ies'} from "${ex?.name}" to "${name}"? Sets, times, notes and ratings come along.`)) return
+    ids.forEach((logId) => updateRow('logs', logId, { exercise_id: to }, true))
+    setMoved({ ids, to })
+    stop()
+  }
+  const undo = () => {
+    if (!moved) return
+    moved.ids.forEach((logId) => updateRow('logs', logId, { exercise_id: id }, true))
+    setMoved(null)
+  }
+
+  return (
+    <section className={`section${selecting ? ' has-bottom-action' : ''}`}>
+      <div className="inline">
+        <h2 className="grow">History</h2>
+        {logs.length > 0 && (
+          <button type="button" className="btn btn-sm" onClick={() => (selecting ? stop() : (setSelecting(true), setMoved(null)))}>
+            {selecting ? 'Cancel' : 'Select'}
+          </button>
+        )}
+      </div>
+
+      {moved && (
+        <div className="merge-done">
+          <span className="grow">
+            Moved {moved.ids.length} entr{moved.ids.length === 1 ? 'y' : 'ies'} to{' '}
+            <a href={`#/exercise/${moved.to}`}>
+              <strong>{ix.exercise.get(moved.to)?.name}</strong>
+            </a>
+            .
+          </span>
+          <button type="button" className="btn btn-sm" onClick={undo}>
+            Undo
+          </button>
+        </div>
+      )}
+
+      {!selecting ? (
+        <Feed filter={(l) => l.exercise_id === id} />
+      ) : (
+        <>
+          <div className="inline select-bar">
+            <span className="grow muted small">{selected.size ? `${selected.size} selected` : 'Tap entries to select'}</span>
+            <button
+              type="button"
+              className="link-btn small"
+              onClick={() => setSelected(selected.size === logs.length ? new Set() : new Set(logs.map((l) => l.id)))}
+            >
+              {selected.size === logs.length ? 'Select none' : 'Select all'}
+            </button>
+          </div>
+          <div className="card">
+            <div className="list">
+              {logs.map((l) => {
+                const sets = ix.setsOfLog.get(l.id) ?? []
+                const on = selected.has(l.id)
+                return (
+                  <label key={l.id} className={`row select-row${on ? ' on' : ''}`}>
+                    <input type="checkbox" checked={on} onChange={() => toggle(l.id)} />
+                    <span className="row-main">
+                      <span className="row-title">{longDate(ix.logDate(l))}</span>
+                      <span className="sets-inline">{sets.length ? fmtSets(sets, displayUnit) : 'No sets'}</span>
+                    </span>
+                    <Stars value={l.rating} />
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+          <div className="bottom-action">
+            <button type="button" className="btn btn-primary btn-block btn-big" disabled={!selected.size} onClick={() => setPicking(true)}>
+              {selected.size ? `Move ${selected.size} to…` : 'Select entries to move'}
+            </button>
+          </div>
+        </>
+      )}
+
+      {picking && (
+        <div className="sheet-backdrop" onClick={() => setPicking(false)}>
+          <div className="sheet sheet-tall" role="dialog" aria-modal="true" aria-label="Move to exercise" onClick={(e) => e.stopPropagation()}>
+            <h3>
+              Move {selected.size} entr{selected.size === 1 ? 'y' : 'ies'} to…
+            </h3>
+            <SearchSelect startOpen options={options} placeholder="Choose an exercise" onPick={moveTo} onClose={() => setPicking(false)} />
+          </div>
+        </div>
+      )}
+    </section>
   )
 }
 
