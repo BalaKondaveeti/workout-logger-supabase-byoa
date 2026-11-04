@@ -1,7 +1,8 @@
 import { PageHeader } from '../components/Bits'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { addLog } from '../lib/actions'
-import { openExercise } from '../lib/nav'
+import { closeChangeExercise, openExercise } from '../lib/nav'
+import { updateRow } from '../lib/store'
 import { byName, useIndex } from '../lib/derive'
 import { isISODate, longDate, shortDate, today } from '../lib/dates'
 import { SearchSelect } from '../components/SearchSelect'
@@ -53,6 +54,44 @@ export function NewExercise({ date: routeDate, name = '', done, cancel }: { date
         right={done ? undefined : <span className="muted small">{date === today() ? 'Today' : longDate(date)}</span>}
       />
       <ExerciseForm initialName={name} onDone={onDone} onCancel={() => window.location.replace(back)} />
+    </div>
+  )
+}
+
+// Full screen for moving one entry (with its sets, times, notes and rating) to a different exercise.
+export function ChangeExercise({ date: routeDate, logId }: { date?: string; logId: string }) {
+  const date = routeDate && isISODate(routeDate) ? routeDate : today()
+  const ix = useIndex()
+  const log = ix.data.logs.find((l) => l.id === logId)
+  const close = () => closeChangeExercise(date, logId)
+  if (!log) return <p className="empty">This entry isn’t there any more.</p>
+  const current = ix.exercise.get(log.exercise_id)
+  const sets = ix.setsOfLog.get(log.id)?.length ?? 0
+
+  const options = ix.data.exercises
+    .filter((e) => !e.archived && e.id !== log.exercise_id)
+    .sort(byName)
+    .map((e) => {
+      const m = e.primary_muscle_id ? ix.muscle.get(e.primary_muscle_id) : undefined
+      const last = ix.logsOfExercise.get(e.id)?.[0]
+      return { id: e.id, label: e.name, color: m?.color, sub: last ? shortDate(ix.logDate(last)) : m?.name }
+    })
+
+  const pick = (exerciseId: string) => {
+    const to = ix.exercise.get(exerciseId)
+    if (!confirm(`Move this entry (${sets} set${sets === 1 ? '' : 's'}) from "${current?.name ?? 'Unknown'}" to "${to?.name}"?`)) return
+    updateRow('logs', log.id, { exercise_id: exerciseId }, true)
+    close()
+  }
+
+  return (
+    <div className="page">
+      <PageHeader back="#/" onBack={close} title={<h1>Change exercise</h1>} right={<span className="muted small">{date === today() ? 'Today' : longDate(date)}</span>} />
+      <p className="hint">
+        Moving this entry from <strong>{current?.name ?? 'Unknown exercise'}</strong> ({sets} set{sets === 1 ? '' : 's'}). Its sets, times,
+        notes and rating come along.
+      </p>
+      <SearchSelect startOpen options={options} placeholder="Choose the right exercise" onPick={pick} onClose={close} />
     </div>
   )
 }

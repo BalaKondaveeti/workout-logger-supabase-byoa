@@ -25,3 +25,20 @@ export function closeExercise(date: string) {
     window.location.replace(`#/log/${date}`)
   }
 }
+
+// "Change exercise" screen on top of the exercise screen: returns there after a pick or close.
+let changeOpenedInApp = false
+
+export function openChangeExercise(date: string, logId: string) {
+  changeOpenedInApp = true
+  window.location.hash = `${exerciseHref(date, logId)}/change`
+}
+
+export function closeChangeExercise(date: string, logId: string) {
+  if (changeOpenedInApp && window.history.length > 1) {
+    changeOpenedInApp = false
+    window.history.back()
+  } else {
+    window.location.replace(exerciseHref(date, logId))
+  }
+}

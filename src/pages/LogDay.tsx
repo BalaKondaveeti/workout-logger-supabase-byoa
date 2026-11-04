@@ -6,7 +6,7 @@ import { SearchSelect } from '../components/SearchSelect'
 import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
 import { byName, lastTime, useIndex } from '../lib/derive'
 import { atLocal, durationMinutes, hhmm, isISODate, prettySeconds, timeOf, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
-import { closeExercise, exerciseHref, markOpenedInApp, openExercise } from '../lib/nav'
+import { closeExercise, exerciseHref, markOpenedInApp, openChangeExercise, openExercise } from '../lib/nav'
 import { setPref, usePrefs } from '../lib/prefs'
 import { updateRow } from '../lib/store'
 import type { GymSet, Log } from '../lib/types'
@@ -207,7 +207,10 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
       />
       <p className="hint ex-screen-date">
         {date === today() ? 'Today' : longDate(date)}
-        {dayLogs.length > 1 ? ` · exercise ${pos + 1} of ${dayLogs.length}` : ''}
+        {dayLogs.length > 1 ? ` · exercise ${pos + 1} of ${dayLogs.length}` : ''} ·{' '}
+        <button type="button" className="link-btn small" onClick={() => openChangeExercise(date, log.id)}>
+          Wrong exercise? Change
+        </button>
       </p>
 
       <section className="section card card-pad">

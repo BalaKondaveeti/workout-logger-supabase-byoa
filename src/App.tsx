@@ -12,7 +12,7 @@ import { initSupabase, sb } from './lib/supabase'
 import { EditExercise, ExerciseDetail } from './pages/ExerciseDetail'
 import { Home } from './pages/Home'
 import { Stats } from './pages/Stats'
-import { AddExercise, NewExercise } from './pages/AddExercise'
+import { AddExercise, ChangeExercise, NewExercise } from './pages/AddExercise'
 import { MergeExercises } from './pages/MergeExercises'
 import { ExerciseScreen, LogDay } from './pages/LogDay'
 import { Menu } from './pages/Menu'
@@ -158,7 +158,9 @@ function Main({ userId, email, onChangeProject }: { userId: string; email?: stri
             <ErrorNotice error={writeError || error} onRetry={writeError ? retryWrites : refresh} />
           </div>
         )}
-        {parts[0] === 'log' && parts[2] === 'x' && parts[3] ? (
+        {parts[0] === 'log' && parts[2] === 'x' && parts[3] && parts[4] === 'change' ? (
+          <ChangeExercise key={hash} date={parts[1]} logId={parts[3]} />
+        ) : parts[0] === 'log' && parts[2] === 'x' && parts[3] ? (
           <ExerciseScreen key={parts[3]} date={parts[1]} logId={parts[3]} />
         ) : parts[0] === 'stats' ? (
           <Stats />
