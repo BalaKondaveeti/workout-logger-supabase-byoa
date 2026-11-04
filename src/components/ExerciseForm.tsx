@@ -59,7 +59,7 @@ export function ExerciseForm({
   const [primary, setPrimary] = useState<string | null>(exercise?.primary_muscle_id ?? null)
   const [secondary, setSecondaryIds] = useState<string[]>(exercise ? (ix.secondaryOf.get(exercise.id) ?? []) : [])
   const [notes, setNotes] = useState(exercise?.notes ?? '')
-  const [unit, setUnit] = useState<Unit>(exercise?.default_unit ?? 'kg')
+  const [unit, setUnit] = useState<Unit>(exercise?.default_unit ?? 'lb') // new exercises default to lb
   const [adding, setAdding] = useState<'primary' | 'secondary' | null>(null)
 
   const muscles = ix.data.muscles.filter((m) => !m.archived || m.id === primary || secondary.includes(m.id)).sort(byName)

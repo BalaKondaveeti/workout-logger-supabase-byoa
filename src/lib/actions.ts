@@ -65,7 +65,7 @@ export function addSet(logId: string): string {
     log_id: logId,
     position: above ? above.position + 1 : 0,
     weight: template?.weight ?? null,
-    unit: template?.unit ?? index.exercise.get(log.exercise_id)?.default_unit ?? 'kg',
+    unit: template?.unit ?? index.exercise.get(log.exercise_id)?.default_unit ?? 'lb',
     reps: null,
     per_arm: template?.per_arm ?? false,
     side: template?.side ?? null,
