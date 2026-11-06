@@ -9,14 +9,14 @@ import { Heatmap } from '../components/Heatmap'
 import { lastMerge, undoMerge } from '../lib/actions'
 import { byName, useIndex } from '../lib/derive'
 import { longDate, prettySeconds, relativeDay, shortDate } from '../lib/dates'
-import { usePrefs } from '../lib/prefs'
+import { setPref, usePrefs } from '../lib/prefs'
 import { exerciseStats, setsPerDate, setTiming } from '../lib/stats'
 import { updateRow } from '../lib/store'
 import { convert, fmtSets, num } from '../lib/units'
 
 export function ExerciseDetail({ id }: { id: string }) {
   const ix = useIndex()
-  const { displayUnit } = usePrefs()
+  const { displayUnit, weightChart } = usePrefs()
   const [merged, setMerged] = useState(() => (lastMerge?.targetId === id ? lastMerge : null))
   const ex = ix.exercise.get(id)
   if (!ex) return <p className="empty">Exercise not found.</p>
@@ -95,10 +95,26 @@ export function ExerciseDetail({ id }: { id: string }) {
 
       {st.sessions.length > 0 && (
         <section className="section card card-pad">
+          <div className="segmented" role="radiogroup" aria-label="Weight chart">
+            {(
+              [
+                ['avg', 'Average weight'],
+                ['top', 'Top weight'],
+              ] as const
+            ).map(([v, label]) => (
+              <button key={v} role="radio" aria-checked={weightChart === v} onClick={() => setPref('weightChart', v)}>
+                {label}
+              </button>
+            ))}
+          </div>
           <Chart
+            key={weightChart}
             kind="line"
-            label="Top weight per session"
-            points={st.sessions.filter((s) => s.maxKg > 0).map((s) => ({ date: s.date, value: convert(s.maxKg, 'kg', unit) }))}
+            label={weightChart === 'avg' ? 'Average weight per session' : 'Top weight per session'}
+            points={st.sessions
+              .map((s) => ({ date: s.date, kg: weightChart === 'avg' ? s.avgKg : s.maxKg }))
+              .filter((p) => p.kg > 0)
+              .map((p) => ({ date: p.date, value: convert(p.kg, 'kg', unit) }))}
             format={(v) => `${num(v)} ${unit}`}
           />
           <Chart
@@ -107,7 +123,10 @@ export function ExerciseDetail({ id }: { id: string }) {
             points={st.sessions.slice(-30).map((s) => ({ date: s.date, value: convert(s.volumeKg, 'kg', unit) }))}
             format={(v) => `${Math.round(v).toLocaleString()} ${unit}`}
           />
-          <p className="hint">Volume = weight × reps, doubled for each-arm sets. Last 30 sessions.</p>
+          <p className="hint">
+            {weightChart === 'avg' ? 'Average weight = weight per rep across all sets, so sets with more reps count more. ' : 'Top weight = heaviest set of the session. '}
+            Volume = weight × reps, doubled for each-arm sets. Last 30 sessions.
+          </p>
         </section>
       )}
 

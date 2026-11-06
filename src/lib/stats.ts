@@ -3,7 +3,17 @@ import type { Index } from './derive'
 import type { GymSet, Log } from './types'
 import { e1rmKg, toKg, volumeKg } from './units'
 
-export type Session = { date: string; sets: GymSet[]; maxKg: number; volumeKg: number; e1rmKg: number }
+export type Session = { date: string; sets: GymSet[]; maxKg: number; avgKg: number; volumeKg: number; e1rmKg: number }
+
+// Average weight per rep: sets with more reps count more (weight as logged; each-arm not doubled).
+// Falls back to the plain average of the weights when no reps are entered.
+function avgWeightKg(sets: GymSet[]) {
+  const weighted = sets.filter((s) => s.weight !== null && s.reps)
+  const reps = weighted.reduce((n, s) => n + s.reps!, 0)
+  if (reps) return weighted.reduce((sum, s) => sum + toKg(s.weight!, s.unit) * s.reps!, 0) / reps
+  const w = sets.filter((s) => s.weight !== null)
+  return w.length ? w.reduce((sum, s) => sum + toKg(s.weight!, s.unit), 0) / w.length : 0
+}
 
 // One entry per date the logs were done, oldest first.
 export function sessions(ix: Index, logs: Log[]): Session[] {
@@ -20,6 +30,7 @@ export function sessions(ix: Index, logs: Log[]): Session[] {
         date,
         sets,
         maxKg: Math.max(0, ...counted.map((s) => toKg(s.weight!, s.unit))),
+        avgKg: avgWeightKg(sets),
         volumeKg: sets.reduce((sum, s) => sum + volumeKg(s), 0),
         e1rmKg: Math.max(0, ...sets.map(e1rmKg)),
       }
