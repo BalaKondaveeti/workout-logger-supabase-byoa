@@ -8,7 +8,6 @@ export type Index = {
   muscle: Map<string, Muscle>
   dayType: Map<string, DayType>
   exercise: Map<string, Exercise>
-  secondaryOf: Map<string, string[]> // exercise id -> muscle ids
   day: Map<string, Day>
   dayByDate: Map<string, Day>
   logsOfDay: Map<string, Log[]> // by position
@@ -88,7 +87,6 @@ export function buildIndex(raw: Data): Index {
     muscle: new Map(data.muscles.map((m) => [m.id, m])),
     dayType: new Map((data.dayTypes ?? []).map((t) => [t.id, t])),
     exercise: new Map(data.exercises.map((e) => [e.id, e])),
-    secondaryOf: new Map([...group(data.secondary, (s) => s.exercise_id)].map(([k, v]) => [k, v.map((s) => s.muscle_id)])),
     day,
     dayByDate: new Map(data.days.map((d) => [d.date, d])),
     logsOfDay,
@@ -107,13 +105,9 @@ export function lastTime(ix: Index, exerciseId: string, date: string) {
   return (ix.logsOfExercise.get(exerciseId) ?? []).find((l) => ix.logDate(l) < date) ?? null
 }
 
-// Exercises that work a muscle, split by primary / secondary.
+// Exercises whose (primary) muscle is `muscleId`.
 export function exercisesForMuscle(ix: Index, muscleId: string) {
-  const primary = ix.data.exercises.filter((e) => e.primary_muscle_id === muscleId)
-  const secondary = ix.data.exercises.filter(
-    (e) => e.primary_muscle_id !== muscleId && (ix.secondaryOf.get(e.id) ?? []).includes(muscleId),
-  )
-  return { primary, secondary }
+  return ix.data.exercises.filter((e) => e.primary_muscle_id === muscleId)
 }
 
 export const byName = <T extends { name: string }>(a: T, b: T) => a.name.localeCompare(b.name)

@@ -1524,6 +1524,14 @@ input[type='time'].input {
   overflow-y: auto;
 }
 
+.no-muscle {
+  color: var(--energy-ink);
+}
+
+.btn.danger-text {
+  color: var(--danger);
+}
+
 .btn-done {
   background: var(--accent-soft);
   color: var(--accent-ink);

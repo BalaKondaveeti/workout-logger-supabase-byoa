@@ -3,7 +3,7 @@ import { PageHeader } from '../components/Bits'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { DateBadge, DayMeta, dayTimes, weekday } from '../components/Feed'
 import { RightIcon, TrashIcon } from '../components/Icons'
-import { createDayType, createMuscle, deleteDayForever, deleteDayType, nextMuscleColor, restoreDay } from '../lib/actions'
+import { createDayType, createMuscle, resetPrimaryMuscles, restorePrimaryMuscles, deleteDayForever, deleteDayType, nextMuscleColor, restoreDay } from '../lib/actions'
 import { loadConfig } from '../lib/config'
 import { byName, useIndex, type TrashedDay } from '../lib/derive'
 import { longDate, relativeDay, toISODate } from '../lib/dates'
@@ -190,7 +190,7 @@ function Exercises() {
               {m && <span className="dot" style={{ background: m.color }} />}
               <a className="grow manage-name" href={`#/exercise/${e.id}`}>
                 {e.name}
-                <span className="muted small"> {m?.name ?? ''}</span>
+                {m ? <span className="muted small"> {m.name}</span> : <span className="small no-muscle"> No muscle</span>}
               </a>
               <button className="btn btn-sm" onClick={() => setEditing(e.id)}>
                 Edit
@@ -208,7 +208,52 @@ function Exercises() {
         </button>
       )}
       <PrefixTool />
+      <ResetMuscles />
     </div>
+  )
+}
+
+// Clear the primary muscle on every exercise, so they can be set again from scratch.
+function ResetMuscles() {
+  const ix = useIndex()
+  const [cleared, setCleared] = useState<{ id: string; muscle: string }[] | null>(null)
+  const withMuscle = ix.data.exercises.filter((e) => e.primary_muscle_id).length
+  const without = ix.data.exercises.filter((e) => !e.archived && !e.primary_muscle_id).length
+
+  if (cleared) {
+    return (
+      <div className="merge-done">
+        <span className="grow">
+          Cleared the muscle on {cleared.length} exercise{cleared.length === 1 ? '' : 's'}. Set them again with Edit.
+        </span>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => {
+            restorePrimaryMuscles(cleared)
+            setCleared(null)
+          }}
+        >
+          Undo
+        </button>
+      </div>
+    )
+  }
+  return (
+    <>
+      {without > 0 && <p className="hint">{without} exercise{without === 1 ? ' has' : 's have'} no muscle set.</p>}
+      <button
+        type="button"
+        className="btn btn-ghost danger-text"
+        disabled={!withMuscle}
+        onClick={() => {
+          if (!confirm(`Clear the primary muscle on all ${withMuscle} exercises (hidden ones too)? Your logs stay; you'll set each muscle again with Edit.`)) return
+          setCleared(resetPrimaryMuscles())
+        }}
+      >
+        Reset all primary muscles…
+      </button>
+    </>
   )
 }
 

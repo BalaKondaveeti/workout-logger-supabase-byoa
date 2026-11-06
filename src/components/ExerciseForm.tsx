@@ -1,6 +1,6 @@
 import { AutoTextarea } from './Bits'
 import { useState, type FormEvent } from 'react'
-import { createExercise, createMuscle, nextMuscleColor, setSecondary } from '../lib/actions'
+import { createExercise, createMuscle, nextMuscleColor } from '../lib/actions'
 import { byName, useIndex } from '../lib/derive'
 import { updateRow } from '../lib/store'
 import type { Exercise, Unit } from '../lib/types'
@@ -42,7 +42,7 @@ function NewMuscle({ onCreated, onCancel }: { onCreated: (id: string) => void; o
   )
 }
 
-// Create or edit an exercise: name, primary + secondary muscles, machine notes, default unit.
+// Create or edit an exercise: name, primary muscle, machine notes, default unit.
 export function ExerciseForm({
   exercise,
   initialName = '',
@@ -57,25 +57,21 @@ export function ExerciseForm({
   const ix = useIndex()
   const [name, setName] = useState(exercise?.name ?? initialName)
   const [primary, setPrimary] = useState<string | null>(exercise?.primary_muscle_id ?? null)
-  const [secondary, setSecondaryIds] = useState<string[]>(exercise ? (ix.secondaryOf.get(exercise.id) ?? []) : [])
   const [notes, setNotes] = useState(exercise?.notes ?? '')
   const [unit, setUnit] = useState<Unit>(exercise?.default_unit ?? 'lb') // new exercises default to lb
-  const [adding, setAdding] = useState<'primary' | 'secondary' | null>(null)
+  const [adding, setAdding] = useState(false)
 
-  const muscles = ix.data.muscles.filter((m) => !m.archived || m.id === primary || secondary.includes(m.id)).sort(byName)
+  const muscles = ix.data.muscles.filter((m) => !m.archived || m.id === primary).sort(byName)
 
-  const addMuscle = (target: 'primary' | 'secondary', query: string) => {
-    if (!query) return setAdding(target)
+  const addMuscle = (query: string) => {
+    if (!query) return setAdding(true)
     const existing = ix.data.muscles.find((m) => m.name.toLowerCase() === query.toLowerCase())
-    const id = existing?.id ?? createMuscle(query, nextMuscleColor())
-    if (target === 'primary') setPrimary(id)
-    else setSecondaryIds((s) => [...new Set([...s, id])])
+    setPrimary(existing?.id ?? createMuscle(query, nextMuscleColor()))
   }
 
   function submit(e: FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
-    const sec = secondary.filter((m) => m !== primary)
     if (exercise) {
       updateRow('exercises', exercise.id, {
         name: name.trim(),
@@ -83,10 +79,9 @@ export function ExerciseForm({
         notes: notes.trim() || null,
         default_unit: unit,
       })
-      setSecondary(exercise.id, sec)
       onDone(exercise.id)
     } else {
-      onDone(createExercise({ name, primary_muscle_id: primary, secondary: sec, notes, default_unit: unit }))
+      onDone(createExercise({ name, primary_muscle_id: primary, notes, default_unit: unit }))
     }
   }
 
@@ -105,8 +100,8 @@ export function ExerciseForm({
       </label>
       <div className="field">
         <span>Primary muscle</span>
-        {adding === 'primary' ? (
-          <NewMuscle onCreated={(id) => (setPrimary(id), setAdding(null))} onCancel={() => setAdding(null)} />
+        {adding ? (
+          <NewMuscle onCreated={(id) => (setPrimary(id), setAdding(false))} onCancel={() => setAdding(false)} />
         ) : (
           <SearchSelect
             options={muscles.map((m) => ({ id: m.id, label: m.name, color: m.color }))}
@@ -114,40 +109,7 @@ export function ExerciseForm({
             placeholder="Choose a muscle"
             onPick={setPrimary}
             addLabel="Add new muscle"
-            onAdd={(q) => addMuscle('primary', q)}
-          />
-        )}
-      </div>
-      <div className="field">
-        <span>Secondary muscles</span>
-        <div className="chips">
-          {muscles
-            .filter((m) => m.id !== primary)
-            .map((m) => {
-              const on = secondary.includes(m.id)
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  className={`chip${on ? ' on' : ''}`}
-                  style={{ '--tag-color': m.color } as React.CSSProperties}
-                  aria-pressed={on}
-                  onClick={() => setSecondaryIds((s) => (on ? s.filter((x) => x !== m.id) : [...s, m.id]))}
-                >
-                  {m.name}
-                </button>
-              )
-            })}
-          {adding !== 'secondary' && (
-            <button type="button" className="chip add" onClick={() => setAdding('secondary')}>
-              + New
-            </button>
-          )}
-        </div>
-        {adding === 'secondary' && (
-          <NewMuscle
-            onCreated={(id) => (setSecondaryIds((s) => [...s, id]), setAdding(null))}
-            onCancel={() => setAdding(null)}
+            onAdd={addMuscle}
           />
         )}
       </div>

@@ -78,9 +78,9 @@ export function Stars({ value, onChange, small }: { value: number | null; onChan
   )
 }
 
-export function MuscleTag({ muscle, secondary, onClick }: { muscle: Muscle; secondary?: boolean; onClick?: () => void }) {
+export function MuscleTag({ muscle, onClick }: { muscle: Muscle; onClick?: () => void }) {
   const style = { '--tag-color': muscle.color } as React.CSSProperties
-  const cls = `tag${secondary ? ' secondary' : ''}`
+  const cls = 'tag'
   if (onClick) {
     return (
       <button type="button" className={cls} style={style} onClick={onClick}>
@@ -95,20 +95,15 @@ export function MuscleTag({ muscle, secondary, onClick }: { muscle: Muscle; seco
   )
 }
 
-// Primary muscle first, then secondary ones (lighter).
+// The exercise's muscle as a tag.
 export function MuscleTags({ exerciseId }: { exerciseId: string }) {
   const ix = useIndex()
   const ex = ix.exercise.get(exerciseId)
-  if (!ex) return null
-  const primary = ex.primary_muscle_id ? ix.muscle.get(ex.primary_muscle_id) : undefined
-  const secondary = (ix.secondaryOf.get(exerciseId) ?? []).map((id) => ix.muscle.get(id)).filter((m): m is Muscle => !!m)
-  if (!primary && !secondary.length) return null
+  const primary = ex?.primary_muscle_id ? ix.muscle.get(ex.primary_muscle_id) : undefined
+  if (!primary) return null
   return (
     <div className="tags">
-      {primary && <MuscleTag muscle={primary} />}
-      {secondary.map((m) => (
-        <MuscleTag key={m.id} muscle={m} secondary />
-      ))}
+      <MuscleTag muscle={primary} />
     </div>
   )
 }

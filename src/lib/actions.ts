@@ -134,7 +134,6 @@ export function createMuscle(name: string, color: string): string {
 export function createExercise(input: {
   name: string
   primary_muscle_id: string | null
-  secondary: string[]
   notes: string
   default_unit: Unit
 }): string {
@@ -147,17 +146,7 @@ export function createExercise(input: {
     archived: false,
   }
   insertRow('exercises', e)
-  setSecondary(e.id, input.secondary.filter((m) => m !== input.primary_muscle_id))
   return e.id
-}
-
-// Makes the exercise's secondary muscles exactly `muscleIds`.
-export function setSecondary(exerciseId: string, muscleIds: string[]) {
-  const rows = getData()!.secondary.filter((s) => s.exercise_id === exerciseId)
-  for (const r of rows) if (!muscleIds.includes(r.muscle_id)) deleteRow('secondary', r.id)
-  for (const m of muscleIds) {
-    if (!rows.some((r) => r.muscle_id === m)) insertRow('secondary', { id: uuid(), exercise_id: exerciseId, muscle_id: m })
-  }
 }
 
 // Palette for new muscles: picked in order, skipping colors already used.
@@ -184,8 +173,8 @@ export function nextMuscleColor() {
 
 // ---------- merging exercises ----------
 // Moves every log of `sourceId` (deleted days included) to `targetId`, gives the target the
-// chosen name, appends the source's machine notes, adds the source's muscles the target lacks,
-// and hides the source (never deleted). The last merge can be undone while the app stays open.
+// chosen name, appends the source's machine notes, takes the source's muscle if the target has
+// none, and hides the source (never deleted). The last merge can be undone while the app stays open.
 
 export type MergeRecord = {
   sourceId: string
@@ -194,7 +183,6 @@ export type MergeRecord = {
   logIds: string[]
   prevTarget: Pick<Exercise, 'name' | 'notes' | 'primary_muscle_id'>
   sourceWasArchived: boolean
-  addedSecondary: string[] // secondary-muscle row ids created on the target
 }
 
 export let lastMerge: MergeRecord | null = null
@@ -215,18 +203,6 @@ export function mergeExercises(sourceId: string, targetId: string, name: string)
   if (!target.primary_muscle_id && source.primary_muscle_id) patch.primary_muscle_id = source.primary_muscle_id
   if (Object.keys(patch).length) updateRow('exercises', targetId, patch, true)
 
-  const primary = patch.primary_muscle_id ?? target.primary_muscle_id
-  const have = new Set(data.secondary.filter((s) => s.exercise_id === targetId).map((s) => s.muscle_id))
-  const wanted = [source.primary_muscle_id, ...data.secondary.filter((s) => s.exercise_id === sourceId).map((s) => s.muscle_id)]
-  const addedSecondary: string[] = []
-  for (const m of wanted) {
-    if (!m || m === primary || have.has(m)) continue
-    have.add(m)
-    const id = uuid()
-    insertRow('secondary', { id, exercise_id: targetId, muscle_id: m })
-    addedSecondary.push(id)
-  }
-
   if (!source.archived) updateRow('exercises', sourceId, { archived: true }, true)
 
   lastMerge = {
@@ -236,7 +212,6 @@ export function mergeExercises(sourceId: string, targetId: string, name: string)
     logIds,
     prevTarget: { name: target.name, notes: target.notes, primary_muscle_id: target.primary_muscle_id },
     sourceWasArchived: source.archived,
-    addedSecondary,
   }
   return lastMerge
 }
@@ -244,7 +219,19 @@ export function mergeExercises(sourceId: string, targetId: string, name: string)
 export function undoMerge(m: MergeRecord) {
   for (const id of m.logIds) updateRow('logs', id, { exercise_id: m.sourceId }, true)
   updateRow('exercises', m.targetId, m.prevTarget, true)
-  for (const id of m.addedSecondary) deleteRow('secondary', id)
   updateRow('exercises', m.sourceId, { archived: m.sourceWasArchived }, true)
   if (lastMerge === m) lastMerge = null
+}
+
+// Clears the primary muscle on every exercise (hidden ones too). Returns what it cleared, for undo.
+export function resetPrimaryMuscles(): { id: string; muscle: string }[] {
+  const cleared = getData()!
+    .exercises.filter((e) => e.primary_muscle_id)
+    .map((e) => ({ id: e.id, muscle: e.primary_muscle_id! }))
+  for (const c of cleared) updateRow('exercises', c.id, { primary_muscle_id: null }, true)
+  return cleared
+}
+
+export function restorePrimaryMuscles(cleared: { id: string; muscle: string }[]) {
+  for (const c of cleared) updateRow('exercises', c.id, { primary_muscle_id: c.muscle }, true)
 }

@@ -27,8 +27,8 @@ export function MuscleDetail({ id }: { id: string }) {
   const muscle = ix.muscle.get(id)
   if (!muscle) return <p className="empty">Muscle not found.</p>
 
-  const { primary, secondary } = exercisesForMuscle(ix, id)
-  const exIds = new Set([...primary, ...secondary].map((e) => e.id))
+  const primary = exercisesForMuscle(ix, id)
+  const exIds = new Set(primary.map((e) => e.id))
   const logs = ix.data.logs.filter((l) => exIds.has(l.exercise_id))
   const dates = [...new Set(logs.map(ix.logDate))].sort()
   const last = dates[dates.length - 1]
@@ -65,10 +65,8 @@ export function MuscleDetail({ id }: { id: string }) {
         <Chart kind="bar" label="Sessions per week" points={weeks} format={(v) => `${Math.round(v * 10) / 10}`} />
       </section>
       <section className="section">
-        <h2>Primary for</h2>
+        <h2>Exercises</h2>
         <ExerciseLinks list={primary} />
-        <h2>Secondary for</h2>
-        <ExerciseLinks list={secondary} />
       </section>
       <section className="section">
         <h2>History</h2>
