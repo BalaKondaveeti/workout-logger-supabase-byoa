@@ -3,16 +3,28 @@ import type { Index } from './derive'
 import type { GymSet, Log } from './types'
 import { e1rmKg, toKg, volumeKg } from './units'
 
-export type Session = { date: string; sets: GymSet[]; maxKg: number; avgKg: number; volumeKg: number; e1rmKg: number }
+export type Session = { date: string; sets: GymSet[]; maxKg: number; volumeKg: number; e1rmKg: number }
 
-// Average weight per rep: sets with more reps count more (weight as logged; each-arm not doubled).
-// Falls back to the plain average of the weights when no reps are entered.
-function avgWeightKg(sets: GymSet[]) {
-  const weighted = sets.filter((s) => s.weight !== null && s.reps)
-  const reps = weighted.reduce((n, s) => n + s.reps!, 0)
-  if (reps) return weighted.reduce((sum, s) => sum + toKg(s.weight!, s.unit) * s.reps!, 0) / reps
-  const w = sets.filter((s) => s.weight !== null)
-  return w.length ? w.reduce((sum, s) => sum + toKg(s.weight!, s.unit), 0) / w.length : 0
+// The rep count an exercise is usually done for: the median reps of all its sets (10 if none).
+export function usualReps(sets: GymSet[]) {
+  const reps = sets.map((s) => s.reps).filter((r): r is number => !!r && r > 0).sort((a, b) => a - b)
+  return reps.length ? reps[Math.floor(reps.length / 2)] : 10
+}
+
+// Sets under this share of the session's best (rep-adjusted) set count as warm-ups and are left out.
+export const WARMUP_SHARE = 0.7
+
+// Average weight for a session, adjusted for reps: each set becomes the weight it equals at
+// `reps` reps (Epley: w × (1 + r/30) ÷ (1 + reps/30)), warm-ups are dropped, the rest averaged.
+// A set done at the usual reps counts as its own weight; a heavy double counts as less.
+export function adjustedAvgKg(sets: GymSet[], reps: number) {
+  const eq = sets
+    .filter((s) => s.weight !== null && s.reps)
+    .map((s) => (toKg(s.weight!, s.unit) * (1 + s.reps! / 30)) / (1 + reps / 30))
+  if (!eq.length) return 0
+  const best = Math.max(...eq)
+  const working = eq.filter((w) => w >= best * WARMUP_SHARE)
+  return working.reduce((a, b) => a + b, 0) / working.length
 }
 
 // One entry per date the logs were done, oldest first.
@@ -30,7 +42,6 @@ export function sessions(ix: Index, logs: Log[]): Session[] {
         date,
         sets,
         maxKg: Math.max(0, ...counted.map((s) => toKg(s.weight!, s.unit))),
-        avgKg: avgWeightKg(sets),
         volumeKg: sets.reduce((sum, s) => sum + volumeKg(s), 0),
         e1rmKg: Math.max(0, ...sets.map(e1rmKg)),
       }

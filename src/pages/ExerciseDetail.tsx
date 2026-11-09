@@ -10,7 +10,7 @@ import { lastMerge, undoMerge } from '../lib/actions'
 import { byName, useIndex } from '../lib/derive'
 import { longDate, prettySeconds, relativeDay, shortDate } from '../lib/dates'
 import { setPref, usePrefs } from '../lib/prefs'
-import { exerciseStats, setsPerDate, setTiming } from '../lib/stats'
+import { adjustedAvgKg, exerciseStats, setsPerDate, setTiming, usualReps, WARMUP_SHARE } from '../lib/stats'
 import { updateRow } from '../lib/store'
 import { convert, fmtSets, num } from '../lib/units'
 
@@ -24,6 +24,7 @@ export function ExerciseDetail({ id }: { id: string }) {
   const unit = displayUnit === 'logged' ? ex.default_unit : displayUnit
   const w = (kg: number) => `${num(convert(kg, 'kg', unit))} ${unit}`
   const st = exerciseStats(ix, id)
+  const reps = usualReps(st.sessions.flatMap((s) => s.sets))
   const logs = ix.logsOfExercise.get(id) ?? []
   const timed = logs.map((l) => setTiming(ix.setsOfLog.get(l.id) ?? [])).filter((t): t is NonNullable<typeof t> => t !== null)
   const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
@@ -110,9 +111,9 @@ export function ExerciseDetail({ id }: { id: string }) {
           <Chart
             key={weightChart}
             kind="line"
-            label={weightChart === 'avg' ? 'Average weight per session' : 'Top weight per session'}
+            label={weightChart === 'avg' ? `Average weight per session (at ${reps} reps)` : 'Top weight per session'}
             points={st.sessions
-              .map((s) => ({ date: s.date, kg: weightChart === 'avg' ? s.avgKg : s.maxKg }))
+              .map((s) => ({ date: s.date, kg: weightChart === 'avg' ? adjustedAvgKg(s.sets, reps) : s.maxKg }))
               .filter((p) => p.kg > 0)
               .map((p) => ({ date: p.date, value: convert(p.kg, 'kg', unit) }))}
             format={(v) => `${num(v)} ${unit}`}
@@ -124,7 +125,9 @@ export function ExerciseDetail({ id }: { id: string }) {
             format={(v) => `${Math.round(v).toLocaleString()} ${unit}`}
           />
           <p className="hint">
-            {weightChart === 'avg' ? 'Average weight = weight per rep across all sets, so sets with more reps count more. ' : 'Top weight = heaviest set of the session. '}
+            {weightChart === 'avg'
+              ? `Average weight: every set converted to its equal at ${reps} reps (your usual for this exercise, Epley), warm-ups under ${Math.round(WARMUP_SHARE * 100)}% of the day's best left out, then averaged. `
+              : 'Top weight = heaviest set of the session. '}
             Volume = weight × reps, doubled for each-arm sets. Last 30 sessions.
           </p>
         </section>
