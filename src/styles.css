@@ -1524,6 +1524,23 @@ input[type='time'].input {
   overflow-y: auto;
 }
 
+.split-row {
+  gap: var(--space-3);
+}
+
+.split-sub {
+  display: block;
+}
+
+.split-since {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.split-since strong {
+  font-size: var(--font-size-lg);
+}
+
 .no-muscle {
   color: var(--energy-ink);
 }
