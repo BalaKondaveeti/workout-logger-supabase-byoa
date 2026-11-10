@@ -1286,10 +1286,6 @@ input[type='time'].input {
   padding-bottom: calc(var(--tap-lg) + var(--tap) + var(--space-6));
 }
 
-.ex-screen-date {
-  margin-top: calc(-1 * var(--space-2));
-}
-
 .ex-screen-foot {
   padding: 0 var(--space-1);
 }
@@ -1436,7 +1432,10 @@ input[type='time'].input {
   font-variant-numeric: tabular-nums;
 }
 
-.last-time .muted {
+.last-time .last-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--accent-ink);
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
@@ -1444,8 +1443,33 @@ input[type='time'].input {
   font-size: var(--font-size-xs);
 }
 
-.last-time a {
-  text-decoration: none;
+.last-note {
+  margin: var(--space-1) 0 0;
+  padding: var(--space-2);
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+}
+
+.last-note-set {
+  color: var(--accent-ink);
+  font-weight: var(--font-weight-bold);
+}
+
+.ex-screen-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.ex-screen-meta .hint {
+  margin: 0;
+}
+
+.ex-history-btn {
+  flex: none;
+  gap: var(--space-1);
 }
 
 .set-row {

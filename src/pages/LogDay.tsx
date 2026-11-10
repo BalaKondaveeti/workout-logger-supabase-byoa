@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AutoTextarea, MuscleTags, PageHeader, Stars } from '../components/Bits'
-import { DownIcon, UpIcon, CloseIcon, RightIcon } from '../components/Icons'
+import { DownIcon, UpIcon, CloseIcon, RightIcon, StatsIcon } from '../components/Icons'
 import { SaveStatus } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
 import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
@@ -11,7 +11,7 @@ import { setPref, usePrefs } from '../lib/prefs'
 import { updateRow } from '../lib/store'
 import type { GymSet, Log } from '../lib/types'
 import { setTiming } from '../lib/stats'
-import { fmtSets } from '../lib/units'
+import { fmtSet, fmtSets } from '../lib/units'
 
 // Number field that keeps what you type ("4." or "") while the stored value is a number.
 function NumInput({
@@ -189,8 +189,16 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
   }
 
   const ex = ix.exercise.get(log.exercise_id)
+  // Last time = every entry of this exercise on the most recent earlier day (it can be logged twice)
   const prev = lastTime(ix, log.exercise_id, date)
-  const prevSets = prev ? (ix.setsOfLog.get(prev.id) ?? []) : []
+  const prevDate = prev ? ix.logDate(prev) : null
+  const prevLogs = prevDate
+    ? (ix.logsOfExercise.get(log.exercise_id) ?? []).filter((l) => ix.logDate(l) === prevDate).sort((a, b) => a.position - b.position)
+    : []
+  const prevSets = prevLogs.flatMap((l) => ix.setsOfLog.get(l.id) ?? [])
+  const prevRating = prevLogs.find((l) => l.rating)?.rating ?? null
+  const prevNotes = prevLogs.map((l) => l.notes?.trim()).filter((n): n is string => !!n)
+  const prevSetNotes = prevSets.map((s, i) => ({ s, n: i + 1 })).filter(({ s }) => s.note?.trim())
   const timing = setTiming(sets)
   const dayLogs = ix.logsOfDay.get(log.day_id) ?? []
   const pos = dayLogs.findIndex((l) => l.id === log.id)
@@ -205,13 +213,18 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
         title={<h1 className="ellipsis">{ex?.name ?? 'Unknown exercise'}</h1>}
         right={<SaveStatus />}
       />
-      <p className="hint ex-screen-date">
-        {date === today() ? 'Today' : longDate(date)}
-        {dayLogs.length > 1 ? ` · exercise ${pos + 1} of ${dayLogs.length}` : ''} ·{' '}
-        <button type="button" className="link-btn small" onClick={() => openChangeExercise(date, log.id)}>
-          Wrong exercise? Change
-        </button>
-      </p>
+      <div className="ex-screen-meta">
+        <p className="hint grow">
+          {date === today() ? 'Today' : longDate(date)}
+          {dayLogs.length > 1 ? ` · exercise ${pos + 1} of ${dayLogs.length}` : ''} ·{' '}
+          <button type="button" className="link-btn small" onClick={() => openChangeExercise(date, log.id)}>
+            Wrong exercise? Change
+          </button>
+        </p>
+        <a className="btn btn-sm ex-history-btn" href={`#/exercise/${log.exercise_id}`}>
+          <StatsIcon /> History & charts
+        </a>
+      </div>
 
       <section className="section card card-pad">
         {ex && (
@@ -237,14 +250,29 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
         </label>
         <MuscleTags exerciseId={log.exercise_id} />
         <div className="last-time">
-          <span className="muted small">Last time</span>
-          {prev ? (
-            <span>
-              {shortDate(ix.logDate(prev))} · {fmtSets(prevSets, displayUnit, ', ') || 'no sets'}
-              {prev.rating ? <> · <Stars value={prev.rating} /></> : null}
-            </span>
+          <span className="last-label">
+            Last time{prevDate ? ` · ${shortDate(prevDate)}` : ''}
+            {prevRating ? <Stars value={prevRating} /> : null}
+          </span>
+          {prevDate ? (
+            <>
+              <span>{fmtSets(prevSets, displayUnit, ', ') || 'No sets'}</span>
+              {prevNotes.map((n, i) => (
+                <p key={i} className="last-note">
+                  {n}
+                </p>
+              ))}
+              {prevSetNotes.map(({ s, n }) => (
+                <p key={s.id} className="last-note">
+                  <span className="last-note-set">
+                    Set {n} · {fmtSet(s, displayUnit)}
+                  </span>{' '}
+                  {s.note!.trim()}
+                </p>
+              ))}
+            </>
           ) : (
-            <span className="muted">First time</span>
+            <span>First time</span>
           )}
         </div>
       </section>
