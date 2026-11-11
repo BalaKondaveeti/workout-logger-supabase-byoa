@@ -5,7 +5,7 @@ import { SaveStatus } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
 import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
 import { byName, lastTime, useIndex } from '../lib/derive'
-import { atLocal, durationMinutes, hhmm, isISODate, prettySeconds, timeOf, longDate, nowTime, prettyDuration, shortDate, today } from '../lib/dates'
+import { atLocal, durationMinutes, hhmm, isISODate, prettySeconds, timeOf, longDate, nowTime, prettyDuration, shortDate, today, daysBetween } from '../lib/dates'
 import { closeExercise, exerciseHref, markOpenedInApp, openChangeExercise, openExercise } from '../lib/nav'
 import { setPref, usePrefs } from '../lib/prefs'
 import { updateRow } from '../lib/store'
@@ -195,6 +195,7 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
     ? (ix.logsOfExercise.get(log.exercise_id) ?? []).filter((l) => ix.logDate(l) === prevDate).sort((a, b) => a.position - b.position)
     : []
   const prevSets = prevLogs.flatMap((l) => ix.setsOfLog.get(l.id) ?? [])
+  const prevGap = prevDate ? daysBetween(prevDate, date) : null // days between last time and this day
   const prevRating = prevLogs.find((l) => l.rating)?.rating ?? null
   const prevNotes = prevLogs.map((l) => l.notes?.trim()).filter((n): n is string => !!n)
   const prevSetNotes = prevSets.map((s, i) => ({ s, n: i + 1 })).filter(({ s }) => s.note?.trim())
@@ -264,6 +265,11 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
           <span className="last-label">
             Last time{prevDate ? ` · ${shortDate(prevDate)}` : ''}
             {prevRating ? <Stars value={prevRating} /> : null}
+            {prevGap !== null && (
+              <span className="last-gap">
+                {prevGap} day{prevGap === 1 ? '' : 's'} ago
+              </span>
+            )}
           </span>
           {prevDate ? (
             <>
@@ -343,15 +349,6 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
         </button>
       </section>
 
-      <div className="inline ex-screen-foot">
-        <button type="button" className="btn btn-sm btn-ghost" disabled={pos <= 0} onClick={() => moveLog(log.id, -1)}>
-          <UpIcon /> Earlier
-        </button>
-        <button type="button" className="btn btn-sm btn-ghost" disabled={pos < 0 || pos >= dayLogs.length - 1} onClick={() => moveLog(log.id, 1)}>
-          <DownIcon /> Later
-        </button>
-      </div>
-
 
       {leaving !== null && empties.length > 0 && (
         <MissingRepsSheet
@@ -375,7 +372,7 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
 }
 
 // One exercise on the day screen: a plain row that opens its own screen (nothing expands here).
-function ExerciseLink({ log, date }: { log: Log; date: string }) {
+function ExerciseLink({ log, date, isFirst, isLast }: { log: Log; date: string; isFirst: boolean; isLast: boolean }) {
   const ix = useIndex()
   const { displayUnit } = usePrefs()
   const ex = ix.exercise.get(log.exercise_id)
@@ -383,18 +380,28 @@ function ExerciseLink({ log, date }: { log: Log; date: string }) {
   const sets = ix.setsOfLog.get(log.id) ?? []
   const timing = setTiming(sets)
   return (
-    <a className="log-card log-card-head log-link" href={exerciseHref(date, log.id)} onClick={markOpenedInApp}>
-      <span className="muscle-bar" style={{ background: muscle?.color }} aria-hidden />
-      <span className="grow">
-        <span className="log-card-title">{ex?.name ?? 'Unknown exercise'}</span>
-        <span className="sets-inline">
-          {sets.length ? fmtSets(sets, displayUnit) : 'No sets yet'}
-          {timing && <span className="muted"> · ⏱ {prettySeconds(timing.durationSec)}</span>}
+    <div className="log-card log-link-row">
+      <a className="log-card-head log-link" href={exerciseHref(date, log.id)} onClick={markOpenedInApp}>
+        <span className="muscle-bar" style={{ background: muscle?.color }} aria-hidden />
+        <span className="grow">
+          <span className="log-card-title">{ex?.name ?? 'Unknown exercise'}</span>
+          <span className="sets-inline">
+            {sets.length ? fmtSets(sets, displayUnit) : 'No sets yet'}
+            {timing && <span className="muted"> · ⏱ {prettySeconds(timing.durationSec)}</span>}
+          </span>
+          {log.rating ? <Stars value={log.rating} /> : <span className="muted small">Not rated</span>}
         </span>
-        {log.rating ? <Stars value={log.rating} /> : <span className="muted small">Not rated</span>}
-      </span>
-      <RightIcon />
-    </a>
+        <RightIcon />
+      </a>
+      <div className="reorder">
+        <button type="button" className="icon-btn" aria-label={`Move ${ex?.name ?? 'exercise'} up`} disabled={isFirst} onClick={() => moveLog(log.id, -1)}>
+          <UpIcon />
+        </button>
+        <button type="button" className="icon-btn" aria-label={`Move ${ex?.name ?? 'exercise'} down`} disabled={isLast} onClick={() => moveLog(log.id, 1)}>
+          <DownIcon />
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -564,8 +571,8 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
       <section className="section">
         <h2>Exercises</h2>
         {logs.length === 0 && <p className="hint">Nothing logged for this day yet. Tap “+ Add exercise” below.</p>}
-        {logs.map((l) => (
-          <ExerciseLink key={l.id} log={l} date={date} />
+        {logs.map((l, i) => (
+          <ExerciseLink key={l.id} log={l} date={date} isFirst={i === 0} isLast={i === logs.length - 1} />
         ))}
       </section>
 

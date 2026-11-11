@@ -1278,8 +1278,32 @@ input[type='time'].input {
   color: var(--energy-ink);
 }
 
-.ex-screen-foot {
-  padding: 0 var(--space-1);
+.log-link-row {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+}
+
+.log-link-row .log-link {
+  flex: 1;
+  min-width: 0;
+}
+
+.reorder {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  justify-content: center;
+  border-left: 1px solid var(--border);
+}
+
+.reorder .icon-btn {
+  flex: 1;
+  color: var(--accent);
+}
+
+.reorder .icon-btn:disabled {
+  color: var(--border);
 }
 
 .log-link {
@@ -1433,6 +1457,17 @@ input[type='time'].input {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: var(--font-size-xs);
+}
+
+.last-gap {
+  margin-left: auto;
+  padding: 2px var(--space-2);
+  background: var(--card);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: var(--font-size-sm);
 }
 
 .last-note {
