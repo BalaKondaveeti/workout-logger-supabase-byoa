@@ -74,7 +74,24 @@ function Switch({ label, checked, onChange }: { label: string; checked: boolean;
   )
 }
 
-function SetRow({ set, n, date, focus, showSides, flash }: { set: GymSet; n: number; date: string; focus: boolean; showSides: boolean; flash: boolean }) {
+function SetRow({
+  set,
+  n,
+  date,
+  focus,
+  showSides,
+  flash,
+  prev,
+}: {
+  set: GymSet
+  n: number
+  date: string
+  focus: boolean
+  showSides: boolean
+  flash: boolean
+  prev?: GymSet // the same set number last time
+}) {
+  const { displayUnit } = usePrefs()
   const [noteOpen, setNoteOpen] = useState(!!set.note)
   const patch = (p: Partial<GymSet>) => updateRow('sets', set.id, p)
   const missing = set.reps === null && addedSets.has(set.id)
@@ -97,6 +114,12 @@ function SetRow({ set, n, date, focus, showSides, flash }: { set: GymSet; n: num
           <CloseIcon />
         </button>
       </div>
+      {prev && (
+        <div className={`set-last${prev.note?.trim() ? ' has-note' : ''}`}>
+          <span className="set-last-label">Last time</span> {fmtSet(prev, displayUnit)}
+          {prev.note?.trim() && <span className="set-last-note"> · {prev.note.trim()}</span>}
+        </div>
+      )}
       <div className="set-opts">
         <Check label="Each arm" checked={set.per_arm && !set.side} onChange={(v) => patch({ per_arm: v, side: null })} />
         {(showSides || set.side) && (
@@ -299,7 +322,16 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
         </div>
         {sets.length === 0 && <p className="hint">No sets yet.</p>}
         {sets.map((s, i) => (
-          <SetRow key={s.id} set={s} n={i + 1} date={date} focus={s.id === focusSet} showSides={showSides} flash={flash?.id === s.id} />
+          <SetRow
+            key={s.id}
+            set={s}
+            n={i + 1}
+            date={date}
+            focus={s.id === focusSet}
+            showSides={showSides}
+            flash={flash?.id === s.id}
+            prev={prevSets[i]}
+          />
         ))}
         {timing && (
           <p className="set-timing">
