@@ -137,8 +137,7 @@ function SetRow({ set, n, date, focus, showSides, flash }: { set: GymSet; n: num
   )
 }
 
-// Full screen for one exercise of a day: notes, last time, sets. Rating and Done are pinned at
-// the bottom so the rating is always in view.
+// Full screen for one exercise of a day: notes, last time, sets, then rating and Done.
 export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logId: string }) {
   const date = routeDate && isISODate(routeDate) ? routeDate : today()
   const ix = useIndex()
@@ -206,7 +205,7 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
   const showSides = sides[log.exercise_id] ?? sets.some((s) => s.side)
 
   return (
-    <div className="page has-bottom-rate">
+    <div className="page">
       <PageHeader
         back={dayHref}
         onBack={() => go(dayHref)}
@@ -219,6 +218,18 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
           {dayLogs.length > 1 ? ` · exercise ${pos + 1} of ${dayLogs.length}` : ''} ·{' '}
           <button type="button" className="link-btn small" onClick={() => openChangeExercise(date, log.id)}>
             Wrong exercise? Change
+          </button>{' '}
+          ·{' '}
+          <button
+            type="button"
+            className="link-btn small danger-link"
+            onClick={() => {
+              if (!confirm(`Remove ${ex?.name ?? 'this exercise'} and its ${sets.length} sets from this day?`)) return
+              closeExercise(date)
+              deleteLog(log.id)
+            }}
+          >
+            Remove exercise
           </button>
         </p>
         <a className="btn btn-sm ex-history-btn" href={`#/exercise/${log.exercise_id}`}>
@@ -322,28 +333,7 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
         </button>
       </section>
 
-      <div className="inline ex-screen-foot">
-        <button type="button" className="btn btn-sm btn-ghost" disabled={pos <= 0} onClick={() => moveLog(log.id, -1)}>
-          <UpIcon /> Earlier
-        </button>
-        <button type="button" className="btn btn-sm btn-ghost" disabled={pos < 0 || pos >= dayLogs.length - 1} onClick={() => moveLog(log.id, 1)}>
-          <DownIcon /> Later
-        </button>
-        <span className="grow" />
-        <button
-          type="button"
-          className="btn btn-danger btn-sm"
-          onClick={() => {
-            if (!confirm(`Remove ${ex?.name ?? 'this exercise'} and its ${sets.length} sets from this day?`)) return
-            closeExercise(date)
-            deleteLog(log.id)
-          }}
-        >
-          Remove exercise
-        </button>
-      </div>
-
-      <div className="bottom-action bottom-rate">
+      <section className="section card card-pad ex-finish">
         <div className={`rate-row${log.rating ? '' : ' unrated'}`}>
           <span className="small">{log.rating ? 'Rating' : 'Rate this exercise'}</span>
           <Stars value={log.rating} onChange={(rating) => updateRow('logs', log.id, { rating }, true)} />
@@ -351,7 +341,17 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
         <button type="button" className="btn btn-primary btn-block btn-big" onClick={done}>
           Done
         </button>
+      </section>
+
+      <div className="inline ex-screen-foot">
+        <button type="button" className="btn btn-sm btn-ghost" disabled={pos <= 0} onClick={() => moveLog(log.id, -1)}>
+          <UpIcon /> Earlier
+        </button>
+        <button type="button" className="btn btn-sm btn-ghost" disabled={pos < 0 || pos >= dayLogs.length - 1} onClick={() => moveLog(log.id, 1)}>
+          <DownIcon /> Later
+        </button>
       </div>
+
 
       {leaving !== null && empties.length > 0 && (
         <MissingRepsSheet
