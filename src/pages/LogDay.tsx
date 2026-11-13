@@ -5,7 +5,7 @@ import { SaveStatus } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
 import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
 import { byName, lastTime, useIndex } from '../lib/derive'
-import { atLocal, durationMinutes, hhmm, isISODate, prettySeconds, timeOf, longDate, nowTime, prettyDuration, shortDate, today, daysBetween } from '../lib/dates'
+import { daysBetween, durationMinutes, hhmm, isISODate, isLiveSession, longDate, nowTime, prettyDuration, prettySeconds, sessionTime, shortDate, timeOf, today } from '../lib/dates'
 import { closeExercise, exerciseHref, markOpenedInApp, openChangeExercise, openExercise } from '../lib/nav'
 import { setPref, usePrefs } from '../lib/prefs'
 import { updateRow } from '../lib/store'
@@ -116,10 +116,10 @@ function SetRow({ set, n, date, focus, showSides, flash }: { set: GymSet; n: num
             className="set-time"
             aria-label={`Set ${n} time`}
             value={timeOf(set.done_at)}
-            onChange={(e) => e.target.value && patch({ done_at: atLocal(date, e.target.value) })}
+            onChange={(e) => e.target.value && patch({ done_at: sessionTime(date, e.target.value) })}
           />
         ) : (
-          <button type="button" className="link-btn set-time-add" onClick={() => patch({ done_at: atLocal(date, timeOf(new Date().toISOString())) })}>
+          <button type="button" className="link-btn set-time-add" onClick={() => patch({ done_at: isLiveSession(date) ? new Date().toISOString() : sessionTime(date, timeOf(new Date().toISOString())) })}>
             + time
           </button>
         )}

@@ -112,3 +112,19 @@ export function atLocal(date: string, hhmmValue: string) {
   const [h, mi] = hhmmValue.split(':').map(Number)
   return new Date(y, mo - 1, d, h, mi).toISOString()
 }
+
+// A gym session can run past midnight: until this hour the next morning, times still belong
+// to the previous day's session.
+export const SESSION_ROLLOVER_HOUR = 6
+
+// True while `date`'s session can still be going on: it's that day, or before 6am the day after.
+export function isLiveSession(date: string, now = new Date()) {
+  const todayIso = today()
+  return date === todayIso || (now.getHours() < SESSION_ROLLOVER_HOUR && date === addDays(todayIso, -1))
+}
+
+// ISO timestamp for a set time (hh:mm) in `date`'s session: times before 6am are the next morning.
+export function sessionTime(date: string, hhmmValue: string) {
+  const h = Number(hhmmValue.split(':')[0])
+  return atLocal(h < SESSION_ROLLOVER_HOUR ? addDays(date, 1) : date, hhmmValue)
+}

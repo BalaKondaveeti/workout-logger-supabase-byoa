@@ -1,4 +1,4 @@
-import { today } from './dates'
+import { isLiveSession } from './dates'
 import { buildIndex, lastTime } from './derive'
 import { deleteRow, getData, insertRow, updateRow, uuid } from './store'
 import type { Day, DayType, Exercise, GymSet, Log, Muscle, Unit } from './types'
@@ -70,8 +70,9 @@ export function addSet(logId: string): string {
     per_arm: template?.per_arm ?? false,
     side: template?.side ?? null,
     note: null,
-    // stamped only while logging today's session; back-filled days get no time (add one by hand)
-    done_at: index.logDate(log) === today() ? new Date().toISOString() : null,
+    // stamped while that day's session is live (that day, or until 6am after it); back-filled days
+    // get no time (add one by hand)
+    done_at: isLiveSession(index.logDate(log)) ? new Date().toISOString() : null,
   }
   insertRow('sets', set)
   addedSets.add(set.id)
