@@ -3,6 +3,7 @@ import { PageHeader } from '../components/Bits'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { DateBadge, DayMeta, dayTimes, weekday } from '../components/Feed'
 import { RightIcon, TrashIcon } from '../components/Icons'
+import { Export } from './Export'
 import { createDayType, createMuscle, resetPrimaryMuscles, restorePrimaryMuscles, deleteDayForever, deleteDayType, nextMuscleColor, restoreDay } from '../lib/actions'
 import { loadConfig } from '../lib/config'
 import { byName, useIndex, type TrashedDay } from '../lib/derive'
@@ -20,6 +21,7 @@ export function Menu({ path, email, onSignOut, onChangeProject }: Props) {
   if (path === 'notes') return <Notes />
   if (path === 'units') return <Units />
   if (path === 'deleted') return <RecentlyDeleted />
+  if (path === 'export') return <Export />
   if (path === 'connection') return <Connection onChangeProject={onChangeProject} />
   return <MenuHome email={email} onSignOut={onSignOut} />
 }
@@ -65,6 +67,7 @@ function MenuHome({ email, onSignOut }: { email?: string; onSignOut: () => void 
         <h2>Units</h2>
         <div className="menu-group">
           <Item href="#/menu/units" label="Units & converter" detail={displayUnit === 'logged' ? 'As logged' : displayUnit} />
+          <Item href="#/menu/export" label="Export data" detail="CSV · text for AI" />
         </div>
       </section>
       <section className="section">

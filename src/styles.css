@@ -1592,6 +1592,30 @@ input[type='time'].input {
   font-size: var(--font-size-lg);
 }
 
+.export-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.export-block h2,
+.export-block .hint {
+  margin: 0;
+}
+
+.export-preview {
+  min-height: 0;
+  max-height: 40dvh;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-input); /* ≥16px: no iOS zoom */
+  white-space: pre-wrap;
+  overflow: auto;
+}
+
+.export-copied {
+  color: var(--accent-ink);
+}
+
 .no-muscle {
   color: var(--energy-ink);
 }
