@@ -4,7 +4,7 @@ import { addLog } from '../lib/actions'
 import { closeChangeExercise, openExercise } from '../lib/nav'
 import { updateRow } from '../lib/store'
 import { byName, useIndex } from '../lib/derive'
-import { isISODate, longDate, shortDate, today } from '../lib/dates'
+import { isISODate, loggingDate, shortDate, today } from '../lib/dates'
 import { SearchSelect } from '../components/SearchSelect'
 
 // Full screen for picking the exercise to add to a day. Picking one adds it and returns to
@@ -26,7 +26,7 @@ export function AddExercise({ date: routeDate }: { date?: string }) {
 
   return (
     <div className="page">
-      <PageHeader back={back} title={<h1>Add exercise</h1>} right={<span className="muted small">{date === today() ? 'Today' : longDate(date)}</span>} />
+      <PageHeader back={back} title={<h1>Add exercise</h1>} right={<span className="muted small">{loggingDate(date)}</span>} />
       <SearchSelect
         startOpen
         options={options}
@@ -51,7 +51,7 @@ export function NewExercise({ date: routeDate, name = '', done, cancel }: { date
       <PageHeader
         back={back}
         title={<h1>New exercise</h1>}
-        right={done ? undefined : <span className="muted small">{date === today() ? 'Today' : longDate(date)}</span>}
+        right={done ? undefined : <span className="muted small">{loggingDate(date)}</span>}
       />
       <ExerciseForm initialName={name} onDone={onDone} onCancel={() => window.location.replace(back)} />
     </div>
@@ -86,7 +86,7 @@ export function ChangeExercise({ date: routeDate, logId }: { date?: string; logI
 
   return (
     <div className="page">
-      <PageHeader back="#/" onBack={close} title={<h1>Change exercise</h1>} right={<span className="muted small">{date === today() ? 'Today' : longDate(date)}</span>} />
+      <PageHeader back="#/" onBack={close} title={<h1>Change exercise</h1>} right={<span className="muted small">{loggingDate(date)}</span>} />
       <p className="hint">
         Moving this entry from <strong>{current?.name ?? 'Unknown exercise'}</strong> ({sets} set{sets === 1 ? '' : 's'}). Its sets, times,
         notes and rating come along.

@@ -128,3 +128,15 @@ export function sessionTime(date: string, hhmmValue: string) {
   const h = Number(hhmmValue.split(':')[0])
   return atLocal(h < SESSION_ROLLOVER_HOUR ? addDays(date, 1) : date, hhmmValue)
 }
+
+// "Today" / "Yesterday" / "Tomorrow" for those days, else null.
+export function dayTag(iso: string) {
+  const n = daysBetween(today(), iso)
+  return n === 0 ? 'Today' : n === -1 ? 'Yesterday' : n === 1 ? 'Tomorrow' : null
+}
+
+// Long date with (Today) / (Yesterday) / (Tomorrow) beside it, for logging screens.
+export function loggingDate(iso: string) {
+  const tag = dayTag(iso)
+  return tag ? `${longDate(iso)} (${tag})` : longDate(iso)
+}

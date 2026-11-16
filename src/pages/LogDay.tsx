@@ -5,7 +5,7 @@ import { SaveStatus } from '../components/SaveStatus'
 import { SearchSelect } from '../components/SearchSelect'
 import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
 import { byName, lastTime, useIndex } from '../lib/derive'
-import { daysBetween, durationMinutes, hhmm, isISODate, isLiveSession, longDate, nowTime, prettyDuration, prettySeconds, sessionTime, shortDate, timeOf, today } from '../lib/dates'
+import { daysBetween, durationMinutes, hhmm, isISODate, isLiveSession, loggingDate, longDate, nowTime, prettyDuration, prettySeconds, sessionTime, shortDate, timeOf, today } from '../lib/dates'
 import { closeExercise, exerciseHref, markOpenedInApp, openChangeExercise, openExercise } from '../lib/nav'
 import { setPref, usePrefs } from '../lib/prefs'
 import { updateRow } from '../lib/store'
@@ -215,7 +215,7 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
       />
       <div className="ex-screen-meta">
         <p className="hint grow">
-          {date === today() ? 'Today' : longDate(date)}
+          {loggingDate(date)}
           {dayLogs.length > 1 ? ` · exercise ${pos + 1} of ${dayLogs.length}` : ''} ·{' '}
           <button type="button" className="link-btn small" onClick={() => openChangeExercise(date, log.id)}>
             Wrong exercise? Change
@@ -251,15 +251,6 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
             />
           </label>
         )}
-        <label className="field">
-          <span>Notes</span>
-          <AutoTextarea
-            className="input"
-            rows={2}
-            value={log.notes ?? ''}
-            onChange={(e) => updateRow('logs', log.id, { notes: e.target.value || null })}
-          />
-        </label>
         <MuscleTags exerciseId={log.exercise_id} />
         <div className="last-time">
           <span className="last-label">
@@ -340,6 +331,15 @@ export function ExerciseScreen({ date: routeDate, logId }: { date?: string; logI
       </section>
 
       <section className="section card card-pad ex-finish">
+        <label className="field">
+          <span>Exercise notes</span>
+          <AutoTextarea
+            className="input"
+            rows={2}
+            value={log.notes ?? ''}
+            onChange={(e) => updateRow('logs', log.id, { notes: e.target.value || null })}
+          />
+        </label>
         <div className={`rate-row${log.rating ? '' : ' unrated'}`}>
           <span className="small">{log.rating ? 'Rating' : 'Rate this exercise'}</span>
           <Stars value={log.rating} onChange={(rating) => updateRow('logs', log.id, { rating }, true)} />
@@ -511,7 +511,7 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
 
   return (
     <div className="page has-bottom-action">
-      <PageHeader back="#/" title={date === today() ? 'Today' : longDate(date)} right={<SaveStatus />} />
+      <PageHeader back="#/" title={<h1 className="ellipsis">{loggingDate(date)}</h1>} right={<SaveStatus />} />
       <div className="bottom-action">
         <a className="btn btn-primary btn-block btn-big" href={`#/log/${date}/add`}>
           + Add exercise
