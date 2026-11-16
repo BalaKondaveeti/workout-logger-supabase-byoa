@@ -22,7 +22,9 @@ function NumInput({
   label,
   autoFocus,
   className,
+  next,
 }: {
+  next?: string // Enter moves to this input (selector within the same set row); otherwise closes the keyboard
   value: number | null
   onChange: (n: number | null) => void
   decimal?: boolean
@@ -40,8 +42,15 @@ function NumInput({
     <input
       className={`input num ${className ?? ''}`}
       inputMode={decimal ? 'decimal' : 'numeric'}
-      enterKeyHint="done"
+      enterKeyHint={next ? 'next' : 'done'}
       aria-label={label}
+      onKeyDown={(e) => {
+        if (e.key !== 'Enter') return
+        e.preventDefault()
+        const target = next ? e.currentTarget.closest('[data-set]')?.querySelector<HTMLInputElement>(next) : null
+        if (target) target.focus()
+        else e.currentTarget.blur()
+      }}
       placeholder={placeholder}
       autoFocus={autoFocus}
       value={text}
@@ -82,7 +91,7 @@ function SetRow({ set, n, date, focus, showSides, flash }: { set: GymSet; n: num
     <div className={`set-row${flash ? ' just-added' : ''}${missing ? ' missing-reps' : ''}`} data-set={set.id}>
       <div className="set-main">
         <span className="set-n">{n}</span>
-        <NumInput label={`Set ${n} weight`} decimal placeholder="Wt" value={set.weight} onChange={(weight) => patch({ weight })} className="weight" />
+        <NumInput label={`Set ${n} weight`} decimal placeholder="Wt" value={set.weight} onChange={(weight) => patch({ weight })} className="weight" next="input.reps" />
         <button
           type="button"
           className="unit-btn"
