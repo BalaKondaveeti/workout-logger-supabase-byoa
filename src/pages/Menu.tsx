@@ -1,3 +1,4 @@
+import { daySplitIds } from '../lib/types'
 import { useState } from 'react'
 import { PageHeader } from '../components/Bits'
 import { ExerciseForm } from '../components/ExerciseForm'
@@ -331,7 +332,7 @@ function Splits() {
   const list = ix.data.dayTypes.filter((t) => showHidden || !t.archived).sort(byName)
   const hiddenCount = ix.data.dayTypes.filter((t) => t.archived).length
   const used = new Map<string, number>()
-  for (const d of ix.data.days) if (d.type_id) used.set(d.type_id, (used.get(d.type_id) ?? 0) + 1)
+  for (const d of ix.data.days) for (const t of daySplitIds(d)) used.set(t, (used.get(t) ?? 0) + 1)
   const add = () => {
     const n = name.trim()
     if (!n || ix.data.dayTypes.some((t) => t.name.toLowerCase() === n.toLowerCase())) return setName('')

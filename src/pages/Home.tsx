@@ -2,6 +2,7 @@ import { PageHeader, Stat } from '../components/Bits'
 import { Feed } from '../components/Feed'
 import { Heatmap } from '../components/Heatmap'
 import { Freshness } from '../components/SaveStatus'
+import { daySplitIds } from '../lib/types'
 import { useIndex } from '../lib/derive'
 import { restLevel } from '../lib/stats'
 import { addDays, daysBetween, shortDate, today } from '../lib/dates'
@@ -52,7 +53,7 @@ function SplitGaps() {
   if (!splits.length) return null
 
   const rows = splits.map((t) => {
-    const dates = [...new Set(ix.data.days.filter((d) => d.type_id === t.id && d.date <= now).map((d) => d.date))].sort()
+    const dates = [...new Set(ix.data.days.filter((d) => daySplitIds(d).includes(t.id) && d.date <= now).map((d) => d.date))].sort()
     const last = dates[dates.length - 1]
     const gaps = dates.slice(1).map((d, i) => daysBetween(dates[i], d))
     return {

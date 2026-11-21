@@ -5,7 +5,7 @@ import { durationMinutes, longDate, parseDate, prettySeconds, prettyTime } from 
 import { openExercise } from '../lib/nav'
 import { setTiming } from '../lib/stats'
 import { usePrefs } from '../lib/prefs'
-import type { Day, Log } from '../lib/types'
+import { daySplitIds, type Day, type Log } from '../lib/types'
 import { fmtSet, fmtSets } from '../lib/units'
 import { MuscleTags, Stars } from './Bits'
 import { PencilIcon, TrashIcon } from './Icons'
@@ -49,16 +49,16 @@ export function weekday(date: string) {
 // Pre-workout, day rating and size of the session as small chips, then the day's notes.
 export function DayMeta({ day, exercises, sets }: { day: Day; exercises: number; sets: number }) {
   const ix = useIndex()
-  const type = day.type_id ? ix.dayType.get(day.type_id) : undefined
+  const types = daySplitIds(day).map((id) => ix.dayType.get(id)).filter((t) => !!t)
   return (
     <>
       <div className="day-meta">
-        {type && (
-          <span className="chip-static chip-type">
+        {types.map((type) => (
+          <span key={type.id} className="chip-static chip-type">
             <span className="dot" style={{ background: type.color }} />
             {type.name}
           </span>
-        )}
+        ))}
         {day.pre_workout && <span className="chip-static energy">⚡ Pre-workout</span>}
         {exercises > 0 && (
           <span className="chip-static">

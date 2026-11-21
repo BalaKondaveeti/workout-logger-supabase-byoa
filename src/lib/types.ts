@@ -25,7 +25,8 @@ export type Day = Row & {
   pre_workout_note: string | null
   rating: number | null
   notes: string | null
-  type_id?: string | null // DayType (split); missing before the column exists
+  type_id?: string | null // first split (kept in sync for older data; see type_ids)
+  type_ids?: string[] | null // all of the day's splits; missing before the column exists
   deleted_at?: string | null // set = in Recently deleted (soft delete); missing before the column exists
 }
 
@@ -79,4 +80,10 @@ export const TABLES: Record<Table, string> = {
 export const OPTIONAL_TABLES: Table[] = ['dayTypes']
 
 // Columns added after launch whose writes are dropped (not failed) until their SQL is run.
-export const OPTIONAL_COLUMNS: Partial<Record<Table, string[]>> = { sets: ['done_at'] }
+export const OPTIONAL_COLUMNS: Partial<Record<Table, string[]>> = { sets: ['done_at'], days: ['type_ids'] }
+
+// A day's splits: the type_ids list, or the single older type_id.
+export function daySplitIds(day: Day): string[] {
+  if (day.type_ids && day.type_ids.length) return day.type_ids
+  return day.type_id ? [day.type_id] : []
+}

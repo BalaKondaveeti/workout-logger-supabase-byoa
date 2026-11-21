@@ -1336,6 +1336,10 @@ input[type='time'].input {
   align-items: flex-start;
 }
 
+.split-chips {
+  padding-top: var(--space-1);
+}
+
 .split-manage {
   align-self: flex-start;
 }

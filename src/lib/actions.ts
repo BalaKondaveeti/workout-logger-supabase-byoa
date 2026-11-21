@@ -1,6 +1,7 @@
 import { isLiveSession } from './dates'
 import { buildIndex, lastTime } from './derive'
 import { deleteRow, getData, insertRow, updateRow, uuid } from './store'
+import { daySplitIds } from './types'
 import type { Day, DayType, Exercise, GymSet, Log, Muscle, Unit } from './types'
 
 // Higher-level writes used by the screens. All go through the store's queue.
@@ -164,8 +165,21 @@ export function createDayType(name: string): string {
   return t.id
 }
 
-// Permanently removes a split; days tagged with it are left without a split.
-export const deleteDayType = (id: string) => deleteRow('dayTypes', id)
+// Permanently removes a split. Days tagged with it keep their other splits (the list column has
+// no foreign key, so it is cleaned here; the older type_id is cleared by the database).
+export function deleteDayType(id: string) {
+  for (const d of getData()!.days) {
+    if (!daySplitIds(d).includes(id)) continue
+    const rest = daySplitIds(d).filter((t) => t !== id)
+    updateRow('days', d.id, { type_ids: rest, type_id: rest[0] ?? null }, true)
+  }
+  deleteRow('dayTypes', id)
+}
+
+// Sets all of a day's splits (first one also kept in type_id for older data).
+export function setDaySplits(date: string, ids: string[]) {
+  updateDay(date, { type_ids: ids, type_id: ids[0] ?? null })
+}
 
 export function nextMuscleColor() {
   const used = new Set(getData()!.muscles.map((m) => m.color.toLowerCase()))

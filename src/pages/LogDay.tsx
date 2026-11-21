@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { daySplitIds } from '../lib/types'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { AutoTextarea, MuscleTags, PageHeader, Stars } from '../components/Bits'
 import { DownIcon, UpIcon, CloseIcon, RightIcon, StatsIcon } from '../components/Icons'
 import { SaveStatus } from '../components/SaveStatus'
-import { SearchSelect } from '../components/SearchSelect'
-import { addedSets, addSet, deleteLog, deleteSet, moveLog, trashDay, updateDay } from '../lib/actions'
+import { addedSets, addSet, deleteLog, deleteSet, moveLog, setDaySplits, trashDay, updateDay } from '../lib/actions'
 import { byName, lastTime, useIndex } from '../lib/derive'
 import { daysBetween, durationMinutes, hhmm, isISODate, isLiveSession, loggingDate, longDate, nowTime, prettyDuration, prettySeconds, sessionTime, shortDate, timeOf, today } from '../lib/dates'
 import { closeExercise, exerciseHref, markOpenedInApp, openChangeExercise, openExercise } from '../lib/nav'
@@ -472,32 +472,31 @@ function MissingRepsSheet({
   )
 }
 
-// The day's split (Push, Pull, Legs…), picked from the user's own list. New splits are only
+// The day's splits (Push, Pull, Legs…): tap to toggle, more than one allowed. New splits are only
 // added in Menu → Splits (never created from here).
-function SplitPicker({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
+function SplitPicker({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }) {
   const ix = useIndex()
-  const options = ix.data.dayTypes
-    .filter((t) => !t.archived || t.id === value)
-    .sort(byName)
-    .map((t) => ({ id: t.id, label: t.name, color: t.color }))
+  const options = ix.data.dayTypes.filter((t) => !t.archived || value.includes(t.id)).sort(byName)
+  const toggle = (id: string) => onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id])
   return (
     <div className="field">
-      <span>Split</span>
-      <div className="inline split-picker">
-        <div className="grow">
-          <SearchSelect
-            options={options}
-            value={value}
-            placeholder={options.length ? 'Choose a split' : 'No splits yet'}
-            onPick={onChange}
-          />
+      <span>Splits</span>
+      {options.length ? (
+        <div className="chips split-chips">
+          {options.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={`chip${value.includes(t.id) ? ' on' : ''}`}
+              style={{ '--tag-color': t.color } as CSSProperties}
+              aria-pressed={value.includes(t.id)}
+              onClick={() => toggle(t.id)}
+            >
+              {t.name}
+            </button>
+          ))}
         </div>
-        {value && (
-          <button type="button" className="icon-btn" aria-label="Clear split" onClick={() => onChange(null)}>
-            <CloseIcon />
-          </button>
-        )}
-      </div>
+      ) : null}
       <a className="link-btn small split-manage" href="#/menu/splits">
         {options.length ? 'Edit splits' : 'Add splits in Menu → Splits'}
       </a>
@@ -557,7 +556,7 @@ export function LogDay({ date: routeDate, focusLog }: { date?: string; focusLog?
           ))}
         </div>
         {dur !== null && <p className="hint">Duration {prettyDuration(dur)}</p>}
-        <SplitPicker value={day?.type_id ?? null} onChange={(type_id) => updateDay(date, { type_id })} />
+        <SplitPicker value={day ? daySplitIds(day) : []} onChange={(ids) => setDaySplits(date, ids)} />
         <label className="check check-lg">
           <input type="checkbox" checked={!!day?.pre_workout} onChange={(e) => updateDay(date, { pre_workout: e.target.checked })} />
           Pre-workout ⚡

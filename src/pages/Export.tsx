@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { PageHeader } from '../components/Bits'
 import { addDays, durationMinutes, hhmm, longDate, prettyDuration, prettySeconds, prettyTime, timeOf, today } from '../lib/dates'
+import { daySplitIds } from '../lib/types'
 import { useIndex, type Index } from '../lib/derive'
 import { setTiming } from '../lib/stats'
 import type { Day, GymSet, Log } from '../lib/types'
@@ -37,7 +38,7 @@ export function buildCsv(ix: Index, rows: DayRow[]) {
   ]
   const out = [head.join(',')]
   for (const { day, entries } of rows) {
-    const split = day.type_id ? (ix.dayType.get(day.type_id)?.name ?? '') : ''
+    const split = daySplitIds(day).map((id) => ix.dayType.get(id)?.name ?? '').filter(Boolean).join(' + ')
     const dayCols = [
       day.date,
       new Date(`${day.date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' }),
@@ -74,7 +75,8 @@ export function buildText(ix: Index, rows: DayRow[], from: string, to: string) {
   for (const { day, entries } of rows) {
     lines.push('')
     const head = [longDate(day.date)]
-    if (day.type_id) head.push(ix.dayType.get(day.type_id)?.name ?? '')
+    const splitNames = daySplitIds(day).map((id) => ix.dayType.get(id)?.name ?? '').filter(Boolean)
+    if (splitNames.length) head.push(splitNames.join(' + '))
     if (day.check_in || day.check_out) {
       const dur = durationMinutes(day.check_in, day.check_out)
       head.push(`${prettyTime(day.check_in) || '?'}–${prettyTime(day.check_out) || '?'}${dur !== null ? ` (${prettyDuration(dur)})` : ''}`)

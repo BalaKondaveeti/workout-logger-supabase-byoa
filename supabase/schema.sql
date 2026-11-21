@@ -110,6 +110,9 @@ alter table public.gym_sets add column if not exists done_at timestamptz; -- whe
 alter table public.gym_days add column if not exists type_id uuid references public.gym_day_types on delete set null;
 create index if not exists gym_day_types_user_idx on public.gym_day_types (user_id);
 create index if not exists gym_days_type_idx on public.gym_days (type_id);
+-- A day can have several splits; type_id stays as the first one for older app versions.
+alter table public.gym_days add column if not exists type_ids uuid[] not null default '{}';
+update public.gym_days set type_ids = array[type_id] where type_id is not null and cardinality(type_ids) = 0;
 alter table public.gym_days drop constraint if exists gym_days_user_id_date_key;
 create unique index if not exists gym_days_user_date_live_key on public.gym_days (user_id, date) where deleted_at is null;
 create index if not exists gym_logs_user_idx on public.gym_logs (user_id);

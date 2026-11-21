@@ -1,3 +1,4 @@
+import { daySplitIds } from '../lib/types'
 import { PageHeader, Stat } from '../components/Bits'
 import { Chart } from '../components/Chart'
 import { Heatmap } from '../components/Heatmap'
@@ -82,7 +83,7 @@ export function Stats() {
     .sort((a, b) => b.dates.size - a.dates.size || b.sets - a.sets)
 
   const splitCounts = new Map<string, number>()
-  for (const d of dayRows) if (d.type_id) splitCounts.set(d.type_id, (splitCounts.get(d.type_id) ?? 0) + 1)
+  for (const d of dayRows) for (const t of daySplitIds(d)) splitCounts.set(t, (splitCounts.get(t) ?? 0) + 1)
   const splits = [...splitCounts]
     .map(([id, n]) => ({ t: ix.dayType.get(id), n }))
     .filter((r) => r.t)
