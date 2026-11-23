@@ -45,6 +45,9 @@ export function Home() {
   )
 }
 
+// A split's day count turns red after this many days without it.
+const SPLIT_LATE_DAYS = 4
+
 // Days since each split was last done, and its usual gap. Longest-ago first, so the top one is
 // what's due next. Tap a split to open the last day it was done.
 function SplitGaps() {
@@ -77,44 +80,33 @@ function SplitGaps() {
           Edit
         </a>
       </div>
-      <div className="card">
-        <div className="list">
-          {rows.map((r) => {
-            const body = (
-              <>
+      <div className="stats stats-3 stats-compact split-tiles">
+        {rows.map((r) => {
+          const late = r.since !== null && r.since > SPLIT_LATE_DAYS
+          const cls = `stat split-tile${late ? ' tone-alert' : r.since !== null ? ' highlight' : ''}`
+          const body = (
+            <>
+              <span className="stat-label split-tile-label">
                 <span className="dot" style={{ background: r.t.color }} />
-                <span className="grow">
-                  <span className="row-title">{r.t.name}</span>
-                  <span className="muted small split-sub">
-                    {r.last ? `Last ${shortDate(r.last)}` : 'Not done yet'}
-                    {r.avgGap !== null ? ` · usually every ${Math.round(r.avgGap * 10) / 10} days` : ''}
-                  </span>
-                </span>
-                <span className="split-since">
-                  {r.since === null ? (
-                    <span className="muted">—</span>
-                  ) : r.since === 0 ? (
-                    <strong>Today</strong>
-                  ) : (
-                    <>
-                      <strong>{r.since}</strong>
-                      <span className="muted small"> day{r.since === 1 ? '' : 's'} ago</span>
-                    </>
-                  )}
-                </span>
-              </>
-            )
-            return r.last ? (
-              <a key={r.t.id} className="row row-link split-row" href={`#/log/${r.last}`}>
-                {body}
-              </a>
-            ) : (
-              <div key={r.t.id} className="row split-row">
-                {body}
-              </div>
-            )
-          })}
-        </div>
+                <span className="ellipsis">{r.t.name}</span>
+              </span>
+              <span className="stat-value">{r.since ?? '—'}</span>
+              <span className="stat-sub">
+                {r.last ? `day${r.since === 1 ? '' : 's'} ago · ${shortDate(r.last)}` : 'Not done yet'}
+              </span>
+              {r.avgGap !== null && <span className="stat-sub muted">usually {Math.round(r.avgGap * 10) / 10}d</span>}
+            </>
+          )
+          return r.last ? (
+            <a key={r.t.id} className={cls} href={`#/log/${r.last}`}>
+              {body}
+            </a>
+          ) : (
+            <div key={r.t.id} className={cls}>
+              {body}
+            </div>
+          )
+        })}
       </div>
     </section>
   )
