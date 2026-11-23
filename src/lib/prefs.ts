@@ -8,10 +8,16 @@ export type DisplayUnit = Unit | 'logged'
 // sides: exercise id -> show the Left / Right checkboxes on its sets
 export type StatsRange = '4w' | '12w' | 'all'
 export type WeightChart = 'avg' | 'top'
-type Prefs = { displayUnit: DisplayUnit; sides: Record<string, boolean>; statsRange: StatsRange; weightChart: WeightChart }
+type Prefs = {
+  displayUnit: DisplayUnit
+  sides: Record<string, boolean>
+  statsRange: StatsRange
+  weightChart: WeightChart
+  homeHiddenSplits: string[] // splits left off Home's Splits card (this device)
+}
 
 const KEY = 'gym.prefs'
-const DEFAULTS: Prefs = { displayUnit: 'logged', sides: {}, statsRange: '12w', weightChart: 'avg' }
+const DEFAULTS: Prefs = { displayUnit: 'logged', sides: {}, statsRange: '12w', weightChart: 'avg', homeHiddenSplits: [] }
 const listeners = new Set<() => void>()
 
 let prefs: Prefs = (() => {

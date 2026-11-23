@@ -4,6 +4,7 @@ import { Heatmap } from '../components/Heatmap'
 import { Freshness } from '../components/SaveStatus'
 import { daySplitIds } from '../lib/types'
 import { useIndex } from '../lib/derive'
+import { usePrefs } from '../lib/prefs'
 import { restLevel } from '../lib/stats'
 import { addDays, daysBetween, shortDate, today } from '../lib/dates'
 
@@ -48,8 +49,9 @@ export function Home() {
 // what's due next. Tap a split to open the last day it was done.
 function SplitGaps() {
   const ix = useIndex()
+  const { homeHiddenSplits } = usePrefs()
   const now = today()
-  const splits = ix.data.dayTypes.filter((t) => !t.archived)
+  const splits = ix.data.dayTypes.filter((t) => !t.archived && !homeHiddenSplits.includes(t.id))
   if (!splits.length) return null
 
   const rows = splits.map((t) => {
@@ -69,7 +71,12 @@ function SplitGaps() {
 
   return (
     <section className="section">
-      <h2>Splits</h2>
+      <div className="inline">
+        <h2 className="grow">Splits</h2>
+        <a className="link-btn small" href="#/menu/splits">
+          Edit
+        </a>
+      </div>
       <div className="card">
         <div className="list">
           {rows.map((r) => {

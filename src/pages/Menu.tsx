@@ -1,5 +1,5 @@
 import { daySplitIds } from '../lib/types'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { PageHeader } from '../components/Bits'
 import { ExerciseForm } from '../components/ExerciseForm'
 import { DateBadge, DayMeta, dayTimes, weekday } from '../components/Feed'
@@ -343,7 +343,7 @@ function Splits() {
   return (
     <div className="page">
       <PageHeader back="#/menu" title={<h1>Splits</h1>} />
-      <p className="hint">Tag each gym day with one of these on the day screen.</p>
+      <p className="hint">Tag each gym day with one or more of these on the day screen.</p>
       <div className="inline">
         <input
           className="input grow"
@@ -383,7 +383,7 @@ function Splits() {
               onClick={() => {
                 const n = used.get(t.id) ?? 0
                 const msg = n
-                  ? `Delete "${t.name}"? ${n} day${n === 1 ? '' : 's'} tagged with it will have no split. This can't be undone.`
+                  ? `Delete "${t.name}"? It's removed from the ${n} day${n === 1 ? '' : 's'} tagged with it (their other splits stay). This can't be undone.`
                   : `Delete "${t.name}"?`
                 if (confirm(msg)) deleteDayType(t.id)
               }}
@@ -398,7 +398,44 @@ function Splits() {
           {showHidden ? 'Hide hidden' : `Show hidden (${hiddenCount})`}
         </button>
       )}
+      <HomeSplits />
     </div>
+  )
+}
+
+// Which splits appear on Home's Splits card (saved on this device). Tap to show / leave off.
+function HomeSplits() {
+  const ix = useIndex()
+  const { homeHiddenSplits } = usePrefs()
+  const list = ix.data.dayTypes.filter((t) => !t.archived).sort(byName)
+  if (!list.length) return null
+  const toggle = (id: string) =>
+    setPref('homeHiddenSplits', homeHiddenSplits.includes(id) ? homeHiddenSplits.filter((x) => x !== id) : [...homeHiddenSplits, id])
+  const shown = list.filter((t) => !homeHiddenSplits.includes(t.id)).length
+  return (
+    <section className="section">
+      <h2>Show on Home</h2>
+      <p className="hint">
+        {shown} of {list.length} shown on the Home Splits card. Tap to show or leave off; you can still tag days with any split.
+      </p>
+      <div className="chips">
+        {list.map((t) => {
+          const on = !homeHiddenSplits.includes(t.id)
+          return (
+            <button
+              key={t.id}
+              type="button"
+              className={`chip${on ? ' on' : ''}`}
+              style={{ '--tag-color': t.color } as CSSProperties}
+              aria-pressed={on}
+              onClick={() => toggle(t.id)}
+            >
+              {t.name}
+            </button>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 
