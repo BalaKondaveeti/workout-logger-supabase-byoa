@@ -22,7 +22,7 @@ body::after {
 }
 
 body::before {
-  background-image: var(--page-wash);
+  background-image: var(--page-wash), var(--page-base);
 }
 
 body::after {

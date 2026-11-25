@@ -31,9 +31,9 @@
   --font-weight-heavy: 700;
   --font-weight-black: 800;
 
-  --bg: #eef1ec; /* page (under the wash) */
+  --bg: #d6f5e3; /* page top colour (status bar); the full gradient is --page-base */
   --card: #ffffff;
-  --card-glass: rgb(255 255 255 / 0.8); /* cards and tiles on the page: the wash shows faintly */
+  --card-glass: rgb(255 255 255 / 0.66); /* cards and tiles on the page: the colour shows through */
   --input: #f2f2f7; /* fields sitting on cards */
   --input-on-bg: #ffffff; /* fields sitting on the page */
   --surface: #f2f2f7; /* quiet buttons, chips */
@@ -62,8 +62,8 @@
   --note-bg: #ffffff; /* notes boxes: white with a dark outline */
   --note-border: #1c1c1e;
   --note-border-width: 1.5px;
-  --nav-bg: rgb(255 255 255 / 0.85);
-  --head-bg: rgb(238 241 236 / 0.72);
+  --nav-bg: rgb(255 255 255 / 0.82);
+  --head-bg: rgb(214 245 227 / 0.55);
   --chart-bar: #86efac;
   --knob: #ffffff; /* switch thumb */
 
@@ -74,10 +74,11 @@
   --grain-btn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 
   /* the page wash: soft colour blobs behind everything */
-  --page-wash: radial-gradient(65% 42% at 8% 0%, rgb(178 240 204 / 0.95), transparent 70%),
-    radial-gradient(55% 38% at 100% 14%, rgb(226 246 150 / 0.75), transparent 70%),
-    radial-gradient(75% 48% at 85% 100%, rgb(182 210 255 / 0.8), transparent 70%),
-    radial-gradient(55% 40% at 0% 72%, rgb(222 204 255 / 0.5), transparent 70%);
+  --page-base: linear-gradient(165deg, #d6f5e3 0%, #e9f8c4 30%, #cfe4ff 65%, #ead6ff 100%);
+  --page-wash: radial-gradient(70% 45% at 0% 0%, rgb(110 231 183 / 0.75), transparent 70%),
+    radial-gradient(60% 40% at 100% 18%, rgb(217 249 112 / 0.7), transparent 70%),
+    radial-gradient(80% 50% at 90% 100%, rgb(125 175 255 / 0.65), transparent 70%),
+    radial-gradient(60% 45% at 0% 70%, rgb(196 160 255 / 0.55), transparent 70%);
 
   /* Home's visit panel: one gradient per status */
   --hero-ok: radial-gradient(60% 95% at 92% 0%, rgb(190 242 100 / 0.6), transparent 70%),
@@ -126,9 +127,9 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #000000;
+    --bg: #052a1f;
     --card: #1c1c1e;
-    --card-glass: rgb(28 28 30 / 0.78);
+    --card-glass: rgb(12 14 22 / 0.5);
     --input: #2c2c2e;
     --input-on-bg: #1c1c1e;
     --surface: #2c2c2e;
@@ -154,16 +155,17 @@
     --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.5);
     --shadow-pop: 0 12px 36px rgb(0 0 0 / 0.7);
     --backdrop: rgb(0 0 0 / 0.6);
-    --note-bg: #000000;
+    --note-bg: rgb(0 0 0 / 0.4);
     --note-border: #8e8e93;
-    --nav-bg: rgb(28 28 30 / 0.85);
-    --head-bg: rgb(0 0 0 / 0.62);
+    --nav-bg: rgb(10 12 20 / 0.82);
+    --head-bg: rgb(5 42 31 / 0.45);
     --chart-bar: #1f6f3a;
     --grain-page: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    --page-wash: radial-gradient(65% 42% at 8% 0%, rgb(16 96 58 / 0.55), transparent 70%),
-      radial-gradient(55% 38% at 100% 14%, rgb(52 46 140 / 0.45), transparent 70%),
-      radial-gradient(75% 48% at 85% 100%, rgb(96 34 120 / 0.38), transparent 70%),
-      radial-gradient(55% 40% at 0% 72%, rgb(14 80 92 / 0.35), transparent 70%);
+    --page-base: linear-gradient(165deg, #052a1f 0%, #06343f 32%, #1b1857 68%, #3a1048 100%);
+    --page-wash: radial-gradient(70% 45% at 0% 0%, rgb(16 185 129 / 0.5), transparent 70%),
+      radial-gradient(60% 40% at 100% 20%, rgb(6 182 212 / 0.38), transparent 70%),
+      radial-gradient(80% 50% at 90% 100%, rgb(168 85 247 / 0.45), transparent 70%),
+      radial-gradient(60% 45% at 0% 72%, rgb(236 72 153 / 0.3), transparent 70%);
     --shadow-hero: none;
 
     --heat-0: #161b22;
@@ -185,13 +187,14 @@
  * light block never leaks into dark mode.
  */
 :root[data-mood='overdue'] {
-  --bg: #fff1f2;
+  --bg: #ffd9dc;
   --accent-2: #e5484d;
-  --page-wash: radial-gradient(65% 42% at 8% 0%, rgb(254 202 202 / 0.95), transparent 70%),
-    radial-gradient(55% 38% at 100% 14%, rgb(253 186 116 / 0.6), transparent 70%),
-    radial-gradient(75% 48% at 85% 100%, rgb(251 182 206 / 0.75), transparent 70%),
-    radial-gradient(55% 40% at 0% 72%, rgb(254 215 170 / 0.5), transparent 70%);
-  --head-bg: rgb(255 241 242 / 0.88);
+  --page-base: linear-gradient(165deg, #ffd9dc 0%, #ffe2c7 35%, #ffd0e4 70%, #f5d2ff 100%);
+  --page-wash: radial-gradient(70% 45% at 0% 0%, rgb(252 129 129 / 0.6), transparent 70%),
+    radial-gradient(60% 40% at 100% 18%, rgb(253 186 116 / 0.65), transparent 70%),
+    radial-gradient(80% 50% at 90% 100%, rgb(244 114 182 / 0.55), transparent 70%),
+    radial-gradient(60% 45% at 0% 70%, rgb(254 215 170 / 0.5), transparent 70%);
+  --head-bg: rgb(255 217 220 / 0.55);
   --accent: #dc2626;
   --accent-text: #ffffff;
   --accent-soft: #fee2e2;
@@ -205,12 +208,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root[data-mood='overdue'] {
-    --bg: #140505;
-    --head-bg: rgb(20 5 5 / 0.85);
+    --bg: #3a0a0e;
+    --head-bg: rgb(58 10 14 / 0.5);
     --accent-2: #ff8a4c;
-    --page-wash: radial-gradient(65% 42% at 8% 0%, rgb(120 20 24 / 0.55), transparent 70%),
-      radial-gradient(55% 38% at 100% 14%, rgb(130 50 10 / 0.4), transparent 70%),
-      radial-gradient(75% 48% at 85% 100%, rgb(110 20 70 / 0.38), transparent 70%);
+    --page-base: linear-gradient(165deg, #3a0a0e 0%, #4a1606 35%, #3d0a2c 70%, #2a0a3a 100%);
+    --page-wash: radial-gradient(70% 45% at 0% 0%, rgb(239 68 68 / 0.45), transparent 70%),
+      radial-gradient(60% 40% at 100% 20%, rgb(249 115 22 / 0.35), transparent 70%),
+      radial-gradient(80% 50% at 90% 100%, rgb(219 39 119 / 0.4), transparent 70%);
     --accent: #ff453a;
     --accent-text: #ffffff;
     --accent-soft: rgb(255 69 58 / 0.18);
