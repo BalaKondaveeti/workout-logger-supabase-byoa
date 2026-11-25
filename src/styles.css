@@ -6,10 +6,33 @@
   box-sizing: border-box;
 }
 
+html {
+  background: var(--bg);
+}
+
+/* grainy gradient wash, fixed behind everything (fixed layers, since iOS ignores fixed backgrounds):
+   the colour blobs on ::before, the grain tiled on ::after */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  background-image: var(--page-wash);
+}
+
+body::after {
+  background-image: var(--grain-page);
+  background-size: var(--grain-size);
+}
+
 html,
 body {
   margin: 0;
-  background: var(--bg);
   color: var(--text);
   font-family: var(--font);
   font-size: var(--font-size);
@@ -34,16 +57,16 @@ h1 {
 
 .large-title {
   font-size: var(--font-size-title);
-  font-weight: var(--font-weight-heavy);
-  letter-spacing: -0.02em;
+  font-weight: var(--font-weight-black);
+  letter-spacing: -0.01em;
+  line-height: 1;
 }
 
 h2 {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-heavy);
+  color: var(--text);
+  letter-spacing: 0;
 }
 
 p {
@@ -154,7 +177,7 @@ textarea {
 }
 
 .card {
-  background: var(--card);
+  background: var(--card-glass);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
@@ -346,7 +369,9 @@ textarea {
 }
 
 .btn-primary {
-  background: var(--accent);
+  background-color: var(--accent);
+  background-image: var(--grain-btn), linear-gradient(135deg, var(--accent), var(--accent-2));
+  background-size: var(--grain-size), 100% 100%;
   color: var(--accent-text);
 }
 
@@ -1827,17 +1852,15 @@ input[type='time'].input {
   gap: 2px;
   min-width: 0;
   padding: var(--space-3);
-  background: var(--card);
+  background: var(--card-glass);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
 
 .stat-label {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .stat-value {
@@ -2067,4 +2090,61 @@ input[type='time'].input {
   .stats {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+/* Home's visit panel: one grainy gradient whose color is your status (data-level) */
+.visit-hero {
+  position: relative;
+  isolation: isolate;
+  gap: 0;
+  padding: var(--space-4) 0;
+  border-radius: var(--radius-hero);
+  background-color: var(--bg);
+  background-image: var(--hero-ok);
+  box-shadow: var(--shadow-hero);
+  color: var(--hero-text);
+}
+
+/* grain over the gradient, under the numbers */
+.visit-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background-image: var(--grain-hero);
+  background-size: var(--grain-size);
+  pointer-events: none;
+}
+
+.visit-hero[data-level='warn'] {
+  background-image: var(--hero-warn);
+}
+
+.visit-hero[data-level='alert'],
+.visit-hero[data-level='overdue'] {
+  background-image: var(--hero-alert);
+}
+
+.visit-hero .stat {
+  padding: 0 var(--space-4);
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.visit-hero .stat + .stat {
+  border-left: 1px solid var(--hero-divider);
+}
+
+.visit-hero .stat .stat-label,
+.visit-hero .stat .stat-sub {
+  color: var(--hero-text-soft);
+}
+
+.visit-hero .stat .stat-value {
+  font-size: var(--font-size-hero);
+  font-weight: var(--font-weight-black);
+  line-height: 1.05;
+  color: var(--hero-text);
 }

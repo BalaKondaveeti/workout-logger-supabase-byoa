@@ -25,7 +25,7 @@ export function Home() {
         <h2>Activity</h2>
         <Heatmap values={ix.setsPerDate} onTap={(d) => (window.location.hash = `#/log/${d}`)} />
       </section>
-      <section className="stats stats-3 stats-compact">
+      <section className="stats stats-3 stats-compact visit-hero" data-level={level}>
         <Stat
           label="Last visit"
           value={since ?? '—'}
